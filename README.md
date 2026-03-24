@@ -53,6 +53,82 @@ Modern Spring Boot-based hospital appointment management system with JWT authent
 └─────────────────┘
 ```
 
+### 🔄 Data Flow Architecture
+
+```mermaid
+graph TD
+    A[Client Request] --> B[Controller Layer]
+    B --> C[Service Layer]
+    C --> D[Repository Layer]
+    D --> E[H2 Database]
+    
+    C --> F[JWT Service]
+    F --> G[Token Generation]
+    
+    C --> H[MapStruct Mappers]
+    H --> I[DTO ↔ Entity Conversion]
+    
+    J[Spring Security] --> K[Authentication Filter]
+    K --> B
+    
+    L[DataInitializer] --> M[Sample Data]
+    M --> E
+```
+
+### 🏗️ System Architecture
+
+```mermaid
+graph LR
+    subgraph "Client Layer"
+        A[Swagger UI]
+        B[REST Client]
+    end
+    
+    subgraph "API Layer"
+        C[Auth Controller]
+        D[User Controller]
+        E[Appointment Controller]
+    end
+    
+    subgraph "Business Layer"
+        F[Auth Service]
+        G[User Service]
+        H[Appointment Service]
+    end
+    
+    subgraph "Data Layer"
+        I[User Repository]
+        J[Appointment Repository]
+        K[H2 Database]
+    end
+    
+    subgraph "Security Layer"
+        L[JWT Filter]
+        M[Spring Security]
+    end
+    
+    A --> C
+    B --> C
+    B --> D
+    B --> E
+    
+    C --> F
+    D --> G
+    E --> H
+    
+    F --> I
+    G --> I
+    H --> J
+    
+    I --> K
+    J --> K
+    
+    L --> M
+    M --> C
+    M --> D
+    M --> E
+```
+
 ## 🚀 Quick Start
 
 ### Prerequisites
