@@ -329,6 +329,26 @@ CREATE TABLE schedules (
 
 ## 🧪 Testing
 
+### Unit Tests
+- **JwtServiceTest:** Comprehensive JWT service testing with 10 test cases
+  - Token generation and validation
+  - Username extraction
+  - Token expiration handling
+  - Custom claims testing
+  - Security validation
+
+### Running Tests
+```bash
+# Run all tests
+mvn test
+
+# Run specific test class
+mvn test -Dtest=JwtServiceTest
+
+# Run tests with coverage
+mvn clean test jacoco:report
+```
+
 ### Sample Users (Auto-generated)
 - **Admin:** `admin/admin123`
 - **Doctors:** `dr_1/password1`, `dr_2/password2`, `dr_3/password3`
