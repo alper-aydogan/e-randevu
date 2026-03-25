@@ -73,6 +73,18 @@ graph TD
     
     L[DataInitializer] --> M[Sample Data]
     M --> E
+    
+    N[Test Layer] --> O[JUnit Tests]
+    O --> P[JwtServiceTest]
+    O --> Q[Service Tests]
+    O --> R[Controller Tests]
+    
+    P --> F
+    Q --> C
+    R --> B
+    
+    S[Maven Surefire] --> T[Test Execution]
+    T --> O
 ```
 
 ### 🏗️ System Architecture
