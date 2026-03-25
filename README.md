@@ -119,6 +119,13 @@ graph LR
         M[Spring Security]
     end
     
+    subgraph "Test Layer"
+        N[JwtServiceTest]
+        O[Service Tests]
+        P[Controller Tests]
+        Q[Maven Surefire]
+    end
+    
     A --> C
     B --> C
     B --> D
@@ -139,6 +146,17 @@ graph LR
     M --> C
     M --> D
     M --> E
+    
+    N --> F
+    O --> F
+    O --> G
+    O --> H
+    P --> C
+    P --> D
+    P --> E
+    Q --> N
+    Q --> O
+    Q --> P
 ```
 
 ## 🚀 Quick Start
