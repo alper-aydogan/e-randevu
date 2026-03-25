@@ -1,5 +1,4 @@
 package com.erandevu.config;
-
 import com.erandevu.repository.UserRepository;
 import com.erandevu.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;

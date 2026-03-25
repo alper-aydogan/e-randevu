@@ -1,5 +1,4 @@
 package com.erandevu.service;
-
 import com.erandevu.dto.request.LoginRequest;
 import com.erandevu.dto.request.RegisterRequest;
 import com.erandevu.dto.response.AuthResponse;
@@ -14,7 +13,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 @Service
 public class AuthService {
 

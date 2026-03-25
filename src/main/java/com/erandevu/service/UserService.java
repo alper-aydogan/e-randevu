@@ -1,5 +1,4 @@
 package com.erandevu.service;
-
 import com.erandevu.dto.response.UserResponse;
 import com.erandevu.entity.User;
 import com.erandevu.enums.Role;
@@ -8,7 +7,6 @@ import com.erandevu.mapper.UserMapper;
 import com.erandevu.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
