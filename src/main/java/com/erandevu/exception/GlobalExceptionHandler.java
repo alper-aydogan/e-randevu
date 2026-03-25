@@ -2,8 +2,8 @@ package com.erandevu.exception;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -171,7 +171,7 @@ public class GlobalExceptionHandler {
     @AllArgsConstructor
     @Schema(description = "Error response payload")
     public static class ErrorResponse {
-        @Schema(description = "Timestamp of the error", example = "2024-01-01T10:00:00")
+        @Schema(description = "Timestamp of error", example = "2024-01-01T10:00:00")
         public LocalDateTime timestamp;
 
         @Schema(description = "HTTP status code", example = "404")
@@ -185,44 +185,43 @@ public class GlobalExceptionHandler {
 
         @Schema(description = "Request path", example = "/api/users/1")
         public String path;
-
-        // Manual builder (since Lombok not working)
+        
         public static ErrorResponseBuilder builder() {
             return new ErrorResponseBuilder();
         }
-
+        
         public static class ErrorResponseBuilder {
             private LocalDateTime timestamp;
             private Integer status;
             private String error;
             private String message;
             private String path;
-
+            
             public ErrorResponseBuilder timestamp(LocalDateTime timestamp) {
                 this.timestamp = timestamp;
                 return this;
             }
-
+            
             public ErrorResponseBuilder status(Integer status) {
                 this.status = status;
                 return this;
             }
-
+            
             public ErrorResponseBuilder error(String error) {
                 this.error = error;
                 return this;
             }
-
+            
             public ErrorResponseBuilder message(String message) {
                 this.message = message;
                 return this;
             }
-
+            
             public ErrorResponseBuilder path(String path) {
                 this.path = path;
                 return this;
             }
-
+            
             public ErrorResponse build() {
                 ErrorResponse response = new ErrorResponse();
                 response.timestamp = this.timestamp;
@@ -239,15 +238,15 @@ public class GlobalExceptionHandler {
     @NoArgsConstructor
     @AllArgsConstructor
     @Schema(description = "Validation error response payload")
+    @EqualsAndHashCode(callSuper = false)
     public static class ValidationErrorResponse extends ErrorResponse {
         @Schema(description = "Field validation errors")
         public Map<String, String> validationErrors;
-
-        // Manual builder override (since Lombok not working)
+        
         public static ValidationErrorResponseBuilder validationBuilder() {
             return new ValidationErrorResponseBuilder();
         }
-
+        
         public static class ValidationErrorResponseBuilder {
             private LocalDateTime timestamp;
             private Integer status;
@@ -255,37 +254,37 @@ public class GlobalExceptionHandler {
             private String message;
             private String path;
             private Map<String, String> validationErrors;
-
+            
             public ValidationErrorResponseBuilder timestamp(LocalDateTime timestamp) {
                 this.timestamp = timestamp;
                 return this;
             }
-
+            
             public ValidationErrorResponseBuilder status(Integer status) {
                 this.status = status;
                 return this;
             }
-
+            
             public ValidationErrorResponseBuilder error(String error) {
                 this.error = error;
                 return this;
             }
-
+            
             public ValidationErrorResponseBuilder message(String message) {
                 this.message = message;
                 return this;
             }
-
+            
             public ValidationErrorResponseBuilder path(String path) {
                 this.path = path;
                 return this;
             }
-
+            
             public ValidationErrorResponseBuilder validationErrors(Map<String, String> validationErrors) {
                 this.validationErrors = validationErrors;
                 return this;
             }
-
+            
             public ValidationErrorResponse build() {
                 ValidationErrorResponse response = new ValidationErrorResponse();
                 response.timestamp = this.timestamp;

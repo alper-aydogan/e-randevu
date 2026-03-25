@@ -53,6 +53,7 @@ public class User implements UserDetails {
     private Role role;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean enabled = true;
 
     @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

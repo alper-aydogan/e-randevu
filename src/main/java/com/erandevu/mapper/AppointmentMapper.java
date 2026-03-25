@@ -23,6 +23,8 @@ public interface AppointmentMapper {
     @Mapping(target = "updatedAt", ignore = true)
     Appointment toAppointment(AppointmentRequest request, User doctor, User patient);
     
+    @Mapping(target = "doctorId", source = "doctor.id")
+    @Mapping(target = "patientId", source = "patient.id")
     @Mapping(target = "doctorName", source = "doctor", qualifiedByName = "mapDoctorName")
     @Mapping(target = "patientName", source = "patient", qualifiedByName = "mapPatientName")
     AppointmentResponse toAppointmentResponse(Appointment appointment);

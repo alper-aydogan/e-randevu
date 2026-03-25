@@ -25,15 +25,15 @@ public interface UserMapper {
     UserResponse toUserResponse(User user);
     
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "username", ignore = true)
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "enabled", ignore = true)
+    @Mapping(target = "authorities", ignore = true)
     @Mapping(target = "doctorAppointments", ignore = true)
     @Mapping(target = "patientAppointments", ignore = true)
     @Mapping(target = "schedules", ignore = true)
-    @Mapping(target = "enabled", ignore = true)
     void updateUserFromRequest(RegisterRequest request, @MappingTarget User user);
 }

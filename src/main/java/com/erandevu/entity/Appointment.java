@@ -48,6 +48,7 @@ public class Appointment {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private AppointmentStatus status = AppointmentStatus.SCHEDULED;
 
     @CreatedDate

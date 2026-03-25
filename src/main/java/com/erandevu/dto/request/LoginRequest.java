@@ -21,13 +21,4 @@ public class LoginRequest {
     @NotBlank(message = "Password is required")
     @Schema(example = "Password123")
     private String password;
-
-    // Manual getters (since Lombok not working)
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
 }
