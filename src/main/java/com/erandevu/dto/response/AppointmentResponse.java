@@ -51,4 +51,10 @@ public class AppointmentResponse {
     
     @Schema(description = "Last update date", example = "2024-01-01T10:00:00")
     private LocalDateTime updatedAt;
+    
+    @Schema(description = "Created by", example = "admin")
+    private String createdBy;
+    
+    @Schema(description = "Updated by", example = "admin")
+    private String updatedBy;
 }

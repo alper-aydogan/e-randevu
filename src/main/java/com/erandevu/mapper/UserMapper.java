@@ -16,9 +16,7 @@ public interface UserMapper {
     
     UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
     
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "isDeleted", constant = "false")
     @Mapping(target = "doctorAppointments", ignore = true)
     @Mapping(target = "patientAppointments", ignore = true)
     @Mapping(target = "schedules", ignore = true)
@@ -38,6 +36,7 @@ public interface UserMapper {
     @Mapping(target = "doctorAppointments", ignore = true)
     @Mapping(target = "patientAppointments", ignore = true)
     @Mapping(target = "schedules", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
     void updateUserFromRequest(RegisterRequest request, @MappingTarget User user);
     
     // Pagination methods

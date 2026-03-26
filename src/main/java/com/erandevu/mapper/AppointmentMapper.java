@@ -18,18 +18,25 @@ public interface AppointmentMapper {
     AppointmentMapper INSTANCE = Mappers.getMapper(AppointmentMapper.class);
     
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "isDeleted", constant = "false")
     @Mapping(target = "endDateTime", ignore = true)
     @Mapping(target = "notes", source = "request.notes")
     @Mapping(target = "cancellationReason", ignore = true)
     @Mapping(target = "status", constant = "SCHEDULED")
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(source = "doctor", target = "doctor")
+    @Mapping(source = "patient", target = "patient")
     Appointment toAppointment(AppointmentRequest request, User doctor, User patient);
     
     @Mapping(target = "doctorId", source = "doctor.id")
     @Mapping(target = "patientId", source = "patient.id")
     @Mapping(target = "doctorName", source = "doctor", qualifiedByName = "mapDoctorName")
     @Mapping(target = "patientName", source = "patient", qualifiedByName = "mapPatientName")
+    @Mapping(target = "createdBy", source = "createdBy")
+    @Mapping(target = "updatedBy", source = "updatedBy")
     AppointmentResponse toAppointmentResponse(Appointment appointment);
     
     @Named("mapDoctorName")
