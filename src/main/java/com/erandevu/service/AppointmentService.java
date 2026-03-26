@@ -2,6 +2,7 @@ package com.erandevu.service;
 
 import com.erandevu.dto.request.AppointmentRequest;
 import com.erandevu.dto.response.AppointmentResponse;
+import com.erandevu.dto.response.PageResponse;
 import com.erandevu.entity.Appointment;
 import com.erandevu.entity.User;
 import com.erandevu.enums.AppointmentStatus;
@@ -11,7 +12,11 @@ import com.erandevu.exception.ResourceNotFoundException;
 import com.erandevu.mapper.AppointmentMapper;
 import com.erandevu.repository.AppointmentRepository;
 import com.erandevu.repository.UserRepository;
+import com.erandevu.util.PageResponseUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,6 +92,21 @@ public class AppointmentService {
                 .toList();
     }
 
+    public PageResponse<AppointmentResponse> getAppointmentsByDoctorPaginated(Long doctorId, int page, int size, String sortBy, String sortDir) {
+        // Verify doctor exists
+        userRepository.findByIdAndEnabledTrue(doctorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + doctorId));
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Appointment> appointmentPage = appointmentRepository.findByDoctorIdAndStatusNotIn(
+                doctorId,
+                List.of(AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW),
+                pageable
+        );
+        Page<AppointmentResponse> appointmentResponsePage = appointmentMapper.toAppointmentResponsePage(appointmentPage);
+        return PageResponseUtil.createPageResponse(appointmentResponsePage);
+    }
+
     public List<AppointmentResponse> getAppointmentsByPatient(Long patientId) {
         // Verify patient exists
         userRepository.findByIdAndEnabledTrue(patientId)
@@ -100,6 +120,21 @@ public class AppointmentService {
         return appointments.stream()
                 .map(appointmentMapper::toAppointmentResponse)
                 .toList();
+    }
+
+    public PageResponse<AppointmentResponse> getAppointmentsByPatientPaginated(Long patientId, int page, int size, String sortBy, String sortDir) {
+        // Verify patient exists
+        userRepository.findByIdAndEnabledTrue(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + patientId));
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Appointment> appointmentPage = appointmentRepository.findByPatientIdAndStatusNotIn(
+                patientId,
+                List.of(AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW),
+                pageable
+        );
+        Page<AppointmentResponse> appointmentResponsePage = appointmentMapper.toAppointmentResponsePage(appointmentPage);
+        return PageResponseUtil.createPageResponse(appointmentResponsePage);
     }
 
     public AppointmentResponse cancelAppointment(Long id, String cancellationReason) {

@@ -2,6 +2,8 @@ package com.erandevu.repository;
 
 import com.erandevu.entity.Appointment;
 import com.erandevu.enums.AppointmentStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,4 +36,17 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     Optional<Appointment> findByIdAndDoctorId(Long id, Long doctorId);
     
     Optional<Appointment> findByIdAndPatientId(Long id, Long patientId);
+    
+    // Pagination methods
+    Page<Appointment> findByDoctorIdAndStatusNotIn(Long doctorId, List<AppointmentStatus> statuses, Pageable pageable);
+    
+    Page<Appointment> findByPatientIdAndStatusNotIn(Long patientId, List<AppointmentStatus> statuses, Pageable pageable);
+    
+    Page<Appointment> findByDoctorIdAndAppointmentDateTimeBetween(Long doctorId, 
+                                                                 LocalDateTime start, 
+                                                                 LocalDateTime end, 
+                                                                 Pageable pageable);
+    
+    @Query("SELECT a FROM Appointment a WHERE a.status = :status")
+    Page<Appointment> findByStatus(@Param("status") AppointmentStatus status, Pageable pageable);
 }

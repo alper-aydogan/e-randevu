@@ -1,11 +1,15 @@
 package com.erandevu.controller;
 
+import com.erandevu.dto.response.PageResponse;
 import com.erandevu.dto.response.UserResponse;
 import com.erandevu.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -41,26 +45,50 @@ public class UserController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all users", description = "Returns all active users")
+    @Operation(summary = "Get all users", description = "Returns all active users with pagination")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        List<UserResponse> response = userService.getAllUsers();
+    public ResponseEntity<PageResponse<UserResponse>> getAllUsers(
+            @Parameter(description = "Page number (0-based)", example = "0") 
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size", example = "10") 
+            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sort by field", example = "id") 
+            @RequestParam(defaultValue = "id") String sortBy,
+            @Parameter(description = "Sort direction", example = "asc") 
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        PageResponse<UserResponse> response = userService.getAllUsersPaginated(page, size, sortBy, sortDir);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/doctors")
-    @Operation(summary = "Get all doctors", description = "Returns all active doctors")
+    @Operation(summary = "Get all doctors", description = "Returns all active doctors with pagination")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
-    public ResponseEntity<List<UserResponse>> getAllDoctors() {
-        List<UserResponse> response = userService.getAllDoctors();
+    public ResponseEntity<PageResponse<UserResponse>> getAllDoctors(
+            @Parameter(description = "Page number (0-based)", example = "0") 
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size", example = "10") 
+            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sort by field", example = "firstName") 
+            @RequestParam(defaultValue = "firstName") String sortBy,
+            @Parameter(description = "Sort direction", example = "asc") 
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        PageResponse<UserResponse> response = userService.getAllDoctorsPaginated(page, size, sortBy, sortDir);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/patients")
-    @Operation(summary = "Get all patients", description = "Returns all active patients")
+    @Operation(summary = "Get all patients", description = "Returns all active patients with pagination")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
-    public ResponseEntity<List<UserResponse>> getAllPatients() {
-        List<UserResponse> response = userService.getAllPatients();
+    public ResponseEntity<PageResponse<UserResponse>> getAllPatients(
+            @Parameter(description = "Page number (0-based)", example = "0") 
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size", example = "10") 
+            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sort by field", example = "firstName") 
+            @RequestParam(defaultValue = "firstName") String sortBy,
+            @Parameter(description = "Sort direction", example = "asc") 
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        PageResponse<UserResponse> response = userService.getAllPatientsPaginated(page, size, sortBy, sortDir);
         return ResponseEntity.ok(response);
     }
 

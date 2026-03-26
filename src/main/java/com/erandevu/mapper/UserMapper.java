@@ -7,6 +7,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.factory.Mappers;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
@@ -36,4 +39,11 @@ public interface UserMapper {
     @Mapping(target = "patientAppointments", ignore = true)
     @Mapping(target = "schedules", ignore = true)
     void updateUserFromRequest(RegisterRequest request, @MappingTarget User user);
+    
+    // Pagination methods
+    List<UserResponse> toUserResponseList(List<User> users);
+    
+    default Page<UserResponse> toUserResponsePage(Page<User> userPage) {
+        return userPage.map(this::toUserResponse);
+    }
 }

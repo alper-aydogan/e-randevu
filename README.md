@@ -23,6 +23,7 @@ Modern Spring Boot-based hospital appointment management system with JWT authent
 - Time conflict prevention
 - Status tracking (SCHEDULED, COMPLETED, CANCELLED, NO_SHOW)
 - Doctor-patient matching
+- **Pagination support for large datasets** 🆕
 
 ### 📊 Schedule Management
 - Doctor working hours
@@ -217,27 +218,33 @@ Content-Type: application/json
 
 ### User Management Endpoints
 
+#### Get All Users (Paginated)
+```http
+GET /api/users?page=0&size=10&sortBy=id&sortDir=asc
+Authorization: Bearer {jwt_token}
+```
+
+#### Get All Doctors (Paginated)
+```http
+GET /api/users/doctors?page=0&size=10&sortBy=firstName&sortDir=asc
+Authorization: Bearer {jwt_token}
+```
+
+#### Get All Patients (Paginated)
+```http
+GET /api/users/patients?page=0&size=10&sortBy=firstName&sortDir=asc
+Authorization: Bearer {jwt_token}
+```
+
 #### Get User by ID
 ```http
 GET /api/users/{id}
 Authorization: Bearer {jwt_token}
 ```
 
-#### Get All Users
+#### Get All Users (Non-paginated)
 ```http
-GET /api/users
-Authorization: Bearer {jwt_token}
-```
-
-#### Get All Doctors
-```http
-GET /api/users/doctors
-Authorization: Bearer {jwt_token}
-```
-
-#### Get All Patients
-```http
-GET /api/users/patients
+GET /api/users/all
 Authorization: Bearer {jwt_token}
 ```
 
@@ -263,15 +270,15 @@ GET /api/appointments/{id}
 Authorization: Bearer {jwt_token}
 ```
 
-#### Get Doctor Appointments
+#### Get Doctor Appointments (Paginated)
 ```http
-GET /api/appointments/doctor/{doctorId}
+GET /api/appointments/doctor/{doctorId}?page=0&size=10&sortBy=appointmentDateTime&sortDir=desc
 Authorization: Bearer {jwt_token}
 ```
 
-#### Get Patient Appointments
+#### Get Patient Appointments (Paginated)
 ```http
-GET /api/appointments/patient/{patientId}
+GET /api/appointments/patient/{patientId}?page=0&size=10&sortBy=appointmentDateTime&sortDir=desc
 Authorization: Bearer {jwt_token}
 ```
 
@@ -283,6 +290,35 @@ Content-Type: application/json
 
 {
   "cancellationReason": "Patient requested"
+}
+```
+
+### Pagination Response Format
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "username": "johndoe",
+      "email": "john@example.com",
+      "firstName": "John",
+      "lastName": "Doe",
+      "phoneNumber": "+1234567890",
+      "role": "PATIENT",
+      "enabled": true,
+      "createdAt": "2024-01-01T10:00:00"
+    }
+  ],
+  "pageNumber": 0,
+  "pageSize": 10,
+  "totalElements": 100,
+  "totalPages": 10,
+  "first": true,
+  "last": false,
+  "hasContent": true,
+  "numberOfElements": 10,
+  "hasNext": true,
+  "hasPrevious": false
 }
 ```
 

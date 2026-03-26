@@ -8,6 +8,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface AppointmentMapper {
@@ -39,5 +42,12 @@ public interface AppointmentMapper {
     default String mapPatientName(User patient) {
         if (patient == null) return null;
         return patient.getFirstName() + " " + patient.getLastName();
+    }
+    
+    // Pagination methods
+    List<AppointmentResponse> toAppointmentResponseList(List<Appointment> appointments);
+    
+    default Page<AppointmentResponse> toAppointmentResponsePage(Page<Appointment> appointmentPage) {
+        return appointmentPage.map(this::toAppointmentResponse);
     }
 }

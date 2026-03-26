@@ -2,8 +2,10 @@ package com.erandevu.controller;
 
 import com.erandevu.dto.request.AppointmentRequest;
 import com.erandevu.dto.response.AppointmentResponse;
+import com.erandevu.dto.response.PageResponse;
 import com.erandevu.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -44,18 +46,36 @@ public class AppointmentController {
     }
 
     @GetMapping("/doctor/{doctorId}")
-    @Operation(summary = "Get appointments by doctor", description = "Returns all appointments for a specific doctor")
+    @Operation(summary = "Get appointments by doctor", description = "Returns all appointments for a specific doctor with pagination")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
-    public ResponseEntity<List<AppointmentResponse>> getAppointmentsByDoctor(@PathVariable Long doctorId) {
-        List<AppointmentResponse> response = appointmentService.getAppointmentsByDoctor(doctorId);
+    public ResponseEntity<PageResponse<AppointmentResponse>> getAppointmentsByDoctor(
+            @PathVariable Long doctorId,
+            @Parameter(description = "Page number (0-based)", example = "0") 
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size", example = "10") 
+            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sort by field", example = "appointmentDateTime") 
+            @RequestParam(defaultValue = "appointmentDateTime") String sortBy,
+            @Parameter(description = "Sort direction", example = "desc") 
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        PageResponse<AppointmentResponse> response = appointmentService.getAppointmentsByDoctorPaginated(doctorId, page, size, sortBy, sortDir);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/patient/{patientId}")
-    @Operation(summary = "Get appointments by patient", description = "Returns all appointments for a specific patient")
+    @Operation(summary = "Get appointments by patient", description = "Returns all appointments for a specific patient with pagination")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
-    public ResponseEntity<List<AppointmentResponse>> getAppointmentsByPatient(@PathVariable Long patientId) {
-        List<AppointmentResponse> response = appointmentService.getAppointmentsByPatient(patientId);
+    public ResponseEntity<PageResponse<AppointmentResponse>> getAppointmentsByPatient(
+            @PathVariable Long patientId,
+            @Parameter(description = "Page number (0-based)", example = "0") 
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size", example = "10") 
+            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sort by field", example = "appointmentDateTime") 
+            @RequestParam(defaultValue = "appointmentDateTime") String sortBy,
+            @Parameter(description = "Sort direction", example = "desc") 
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        PageResponse<AppointmentResponse> response = appointmentService.getAppointmentsByPatientPaginated(patientId, page, size, sortBy, sortDir);
         return ResponseEntity.ok(response);
     }
 
