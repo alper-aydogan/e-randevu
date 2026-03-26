@@ -1,19 +1,30 @@
-# Use OpenJDK 21 as base image
-FROM openjdk:21-jdk-slim
-
-# Set working directory
+# Multi-stage build with Eclipse Temurin for Apple Silicon
+FROM eclipse-temurin:21-jdk-jammy AS build
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml
-COPY mvnw .
-COPY .mvn .mvn
-COPY pom.xml .
+# Copy only necessary files first (better layer caching)
+COPY mvnw .mvn pom.xml ./
+RUN ./mvnw dependency:go-offline -B
 
-# Download dependencies
-RUN ./mvnw dependency:go-offline
+# Copy source code
+COPY src ./src
 
-# Copy the built jar
-COPY target/e-randevu-*.jar app.jar
+# Build application
+RUN ./mvnw clean package -DskipTests -B
+
+# Runtime stage - JRE only for smaller image
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Copy built jar from build stage
+COPY --from=build /app/target/e-randevu-*.jar app.jar
+
+# Create non-root user for security
+RUN addgroup --system spring && adduser --system spring --ingroup spring
+USER spring:spring
 
 # Expose port 8080
 EXPOSE 8080
