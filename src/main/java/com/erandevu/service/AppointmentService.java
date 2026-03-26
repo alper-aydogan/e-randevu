@@ -65,7 +65,12 @@ public class AppointmentService {
         }
 
         // Create appointment
-        Appointment appointment = appointmentMapper.toAppointment(request, doctor, patient);
+        Appointment appointment = new Appointment();
+        appointment.setDoctor(doctor);
+        appointment.setPatient(patient);
+        appointment.setAppointmentDateTime(request.getAppointmentDateTime());
+        appointment.setNotes(request.getNotes());
+        appointment.setStatus(AppointmentStatus.SCHEDULED);
         Appointment savedAppointment = appointmentRepository.save(appointment);
 
         return appointmentMapper.toAppointmentResponse(savedAppointment);

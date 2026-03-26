@@ -403,6 +403,13 @@ CREATE TABLE schedules (
   - Custom claims testing
   - Security validation
 
+- **AppointmentServiceTest:** Comprehensive appointment service testing with 8 test cases
+  - Appointment creation and validation
+  - Time conflict prevention
+  - Exception handling (InvalidAppointmentTimeException, AppointmentConflictException, ResourceNotFoundException)
+  - Appointment cancellation scenarios
+  - Business logic validation
+
 ### Running Tests
 ```bash
 # Run all tests
@@ -410,9 +417,13 @@ mvn test
 
 # Run specific test class
 mvn test -Dtest=JwtServiceTest
+mvn test -Dtest=AppointmentServiceTest
 
 # Run tests with coverage
 mvn clean test jacoco:report
+
+# View coverage report
+open target/site/jacoco/index.html
 ```
 
 ### Sample Users (Auto-generated)
