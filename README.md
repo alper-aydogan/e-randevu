@@ -393,6 +393,75 @@ CREATE TABLE schedules (
 );
 ```
 
+## 🐳 Docker Deployment
+
+### Prerequisites
+- Docker Desktop installed and running
+- Docker Compose (or Docker Compose plugin)
+- 4GB+ RAM available
+
+### Quick Start
+```bash
+# Clone the repository
+git clone https://github.com/alper-aydogan/e-randevu.git
+cd e-randevu
+
+# Build and run with Docker
+docker compose up --build
+
+# Or with Docker Compose (older versions)
+docker-compose up --build
+```
+
+### Services
+- **e-randevu-app**: Main application (port 8080)
+- **postgres**: PostgreSQL database (port 5432)
+- **redis**: Redis cache (port 6379)
+- **pgadmin**: Database management UI (port 5050)
+
+### Access Points
+- **Application**: http://localhost:8080
+- **API Documentation**: http://localhost:8080/swagger-ui.html
+- **Health Check**: http://localhost:8080/actuator/health
+- **Database Admin**: http://localhost:5050 (pgAdmin)
+
+### Environment Variables
+| Variable | Default | Description |
+|-----------|----------|-------------|
+| `SPRING_PROFILES_ACTIVE` | docker | Active Spring profile |
+| `SPRING_DATASOURCE_URL` | jdbc:postgresql://postgres:5432/erandevu | Database URL |
+| `SPRING_DATASOURCE_USERNAME` | erandevu | Database username |
+| `SPRING_DATASOURCE_PASSWORD` | password123 | Database password |
+| `JWT_SECRET` | mySecretKey... | JWT signing key |
+| `JWT_EXPIRATION` | 86400000 | Token expiration (24 hours) |
+
+### Development Workflow
+```bash
+# Build the application
+mvn clean package -DskipTests
+
+# Run with Docker
+docker compose up --build
+
+# View logs
+docker compose logs -f app
+
+# Stop services
+docker compose down
+
+# Clean up volumes
+docker compose down -v
+```
+
+### Production Deployment
+```bash
+# Use production profile
+docker compose --profile production up --build
+
+# Or with environment file
+docker compose --env-file .env up --build
+```
+
 ## 🧪 Testing
 
 ### Unit Tests
