@@ -14,6 +14,8 @@ import com.erandevu.repository.AppointmentRepository;
 import com.erandevu.repository.UserRepository;
 import com.erandevu.util.PageResponseUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +40,7 @@ public class AppointmentService {
         this.appointmentMapper = appointmentMapper;
     }
 
+    @CacheEvict(value = "appointments", allEntries = true)
     public AppointmentResponse createAppointment(AppointmentRequest request) {
         // Validate appointment time is in future
         if (request.getAppointmentDateTime().isBefore(LocalDateTime.now())) {
@@ -76,12 +79,14 @@ public class AppointmentService {
         return appointmentMapper.toAppointmentResponse(savedAppointment);
     }
 
+    @Cacheable(value = "appointments", key = "#id")
     public AppointmentResponse getAppointmentById(Long id) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
         return appointmentMapper.toAppointmentResponse(appointment);
     }
 
+    @Cacheable(value = "appointments", key = "#doctorId")
     public List<AppointmentResponse> getAppointmentsByDoctor(Long doctorId) {
         // Verify doctor exists
         userRepository.findByIdAndEnabledTrue(doctorId)
@@ -97,6 +102,7 @@ public class AppointmentService {
                 .toList();
     }
 
+    @Cacheable(value = "appointments", key = "#doctorId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort")
     public PageResponse<AppointmentResponse> getAppointmentsByDoctorPaginated(Long doctorId, int page, int size, String sortBy, String sortDir) {
         // Verify doctor exists
         userRepository.findByIdAndEnabledTrue(doctorId)
@@ -112,6 +118,7 @@ public class AppointmentService {
         return PageResponseUtil.createPageResponse(appointmentResponsePage);
     }
 
+    @Cacheable(value = "appointments", key = "#patientId")
     public List<AppointmentResponse> getAppointmentsByPatient(Long patientId) {
         // Verify patient exists
         userRepository.findByIdAndEnabledTrue(patientId)
@@ -127,6 +134,7 @@ public class AppointmentService {
                 .toList();
     }
 
+    @Cacheable(value = "appointments", key = "#patientId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort")
     public PageResponse<AppointmentResponse> getAppointmentsByPatientPaginated(Long patientId, int page, int size, String sortBy, String sortDir) {
         // Verify patient exists
         userRepository.findByIdAndEnabledTrue(patientId)
@@ -142,6 +150,7 @@ public class AppointmentService {
         return PageResponseUtil.createPageResponse(appointmentResponsePage);
     }
 
+    @CacheEvict(value = "appointments", key = "#id")
     public AppointmentResponse cancelAppointment(Long id, String cancellationReason) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
@@ -156,16 +165,14 @@ public class AppointmentService {
 
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointment.setCancellationReason(cancellationReason);
-
         Appointment updatedAppointment = appointmentRepository.save(appointment);
         return appointmentMapper.toAppointmentResponse(updatedAppointment);
     }
 
+    @CacheEvict(value = "appointments", key = "#id")
     public void deleteAppointment(Long id) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
-
         appointmentRepository.delete(appointment);
     }
-
-    }
+}

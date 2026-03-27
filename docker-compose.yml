@@ -1,88 +1,82 @@
-version: '3.8'
-
 services:
-  # E-Randevu Application
   app:
-    build: 
+    build:
       context: .
-      platforms:
-        - linux/amd64
+      dockerfile: Dockerfile
+    image: e-randevu:latest
+    container_name: e-randevu-app
     ports:
-      - "8081:8080"  # Dış port 8081, iç port 8080
+      - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erandevu
-      - SPRING_DATASOURCE_USERNAME=erandevu
-      - SPRING_DATASOURCE_PASSWORD=password123
-      - JWT_SECRET=mySecretKey1234567890123456789012345678901234567890123456789
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=alper
+      - SPRING_DATASOURCE_PASSWORD=pass123
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - JWT_SECRET=mySecretKey12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
       - JWT_EXPIRATION=86400000
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_TIMEOUT=30000ms
+      - SPRING_REDIS_CONNECT_TIMEOUT=10000ms
+      - SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING=true
+      - SPRING_MAIN_ALLOW_CIRCULAR_REFERENCES=true
     depends_on:
-      - postgres
-      - redis
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - erandevu-network
+    restart: unless-stopped
 
-  # PostgreSQL Database
   postgres:
-    image: postgres:15-alpine
-    container_name: erandevu-postgres
+    image: postgres:16-alpine
+    container_name: e-randevu-postgres
     environment:
-      POSTGRES_DB: erandevu
-      POSTGRES_USER: erandevu
-      POSTGRES_PASSWORD: password123
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
-    ports:
-      - "5432:5432"
+      - POSTGRES_DB=erandevu
+      - POSTGRES_USER=alper
+      - POSTGRES_PASSWORD=pass123
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - erandevu-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U erandevu"]
+      test: ["CMD-SHELL", "pg_isready -U alper -d erandevu"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
-  # Redis Cache
   redis:
     image: redis:7-alpine
-    container_name: erandevu-redis
+    container_name: e-randevu-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - erandevu-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
-
-  # pgAdmin (Optional - for database management)
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: erandevu-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@erandevu.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
-      PGADMIN_CONFIG_SERVER_MODE: False
-    ports:
-      - "5050:80"
-    depends_on:
-      - postgres
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+    restart: unless-stopped
 
 volumes:
   postgres_data:
     driver: local
   redis_data:
     driver: local
-  pgadmin_data:
-    driver: local
 
 networks:
-  default:
+  erandevu-network:
+    driver: bridge
     name: erandevu-network

@@ -35,10 +35,12 @@ Modern Spring Boot-based hospital appointment management system with JWT authent
 
 - **Backend:** Spring Boot 3.4.0, Java 21
 - **Security:** Spring Security, JWT
-- **Database:** H2 (In-Memory), Spring Data JPA
+- **Database:** PostgreSQL 16, Redis 7, Spring Data JPA
+- **Cache:** Redis with Lettuce client
 - **Documentation:** OpenAPI 3.0, Swagger UI
 - **Build Tool:** Maven
 - **Code Quality:** Lombok, MapStruct
+- **Containerization:** Docker Compose
 
 ## 📦 Architecture
 
@@ -61,7 +63,7 @@ graph TD
     A[Client Request] --> B[Controller Layer]
     B --> C[Service Layer]
     C --> D[Repository Layer]
-    D --> E[H2 Database]
+    D --> E[PostgreSQL Database]
     
     C --> F[JWT Service]
     F --> G[Token Generation]
@@ -115,7 +117,7 @@ graph LR
     subgraph "Data Layer"
         I[User Repository]
         J[Appointment Repository]
-        K[H2 Database]
+        K[PostgreSQL Database]
     end
     
     subgraph "Security Layer"
@@ -167,25 +169,35 @@ graph LR
 ### Prerequisites
 - Java 21+
 - Maven 3.6+
+- Docker & Docker Compose (for production)
 
 ### Installation
 
-1. **Clone the repository**
+#### Option 1: Local Development
 ```bash
 git clone https://github.com/alper-aydogan/e-randevu.git
 cd e-randevu
-```
-
-2. **Build and run**
-```bash
-mvn clean install
 mvn spring-boot:run
 ```
 
-3. **Access the application**
+#### Option 2: Docker Production
+```bash
+git clone https://github.com/alper-aydogan/e-randevu.git
+cd e-randevu
+docker compose up --build
+```
+
+### Access Application
+
+#### Local Development
 - API Base URL: `http://localhost:8081`
 - Swagger UI: `http://localhost:8081/swagger-ui.html`
-- H2 Console: `http://localhost:8081/h2-console`
+
+#### Docker Production
+- API Base URL: `http://localhost:8081`
+- Swagger UI: `http://localhost:8081/swagger-ui.html`
+- PostgreSQL: `localhost:5432`
+- Redis: `localhost:6379`
 
 ## API Documentation
 
@@ -575,7 +587,7 @@ spring.main.allow-bean-definition-overriding=true
 # Circular References
 spring.main.allow-circular-references=true
 ```
-
+     
 ## Access Points
 
 - **Swagger UI:** http://localhost:8081/swagger-ui.html

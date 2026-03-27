@@ -2,15 +2,20 @@
 FROM eclipse-temurin:21-jdk-jammy AS build
 WORKDIR /app
 
-# Copy only necessary files first (better layer caching)
-COPY mvnw .mvn pom.xml ./
-RUN ./mvnw dependency:go-offline -B
+# Copy all Maven wrapper files
+COPY .mvn .mvn
+
+# Copy project files
+COPY mvnw pom.xml ./
+
+# Make mvnw executable
+RUN chmod +x mvnw
 
 # Copy source code
 COPY src ./src
 
-# Build application
-RUN ./mvnw clean package -DskipTests -B
+# Build application (using container's Java)
+RUN ./mvnw clean package -DskipTests -B -Dmaven.compiler.fork=false
 
 # Runtime stage - JRE only for smaller image
 FROM eclipse-temurin:21-jre-jammy
@@ -26,12 +31,12 @@ COPY --from=build /app/target/e-randevu-*.jar app.jar
 RUN addgroup --system spring && adduser --system spring --ingroup spring
 USER spring:spring
 
-# Expose port 8080
-EXPOSE 8080
+# Expose port 8081
+EXPOSE 8081
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/actuator/health || exit 1
+  CMD curl -f http://localhost:8081/actuator/health || exit 1
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=docker", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
