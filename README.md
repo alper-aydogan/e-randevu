@@ -552,6 +552,8 @@ curl -X POST http://localhost:8081/api/appointments \
 ## Configuration
 
 ### Application Properties
+
+#### Local Development (H2)
 ```properties
 # Server
 server.port=8081
@@ -561,15 +563,12 @@ spring.datasource.url=jdbc:h2:mem:testdb
 spring.datasource.driverClassName=org.h2.Driver
 spring.datasource.username=sa
 spring.datasource.password=password
-spring.h2.console.enabled=false
-
-# JPA
 spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
 spring.jpa.hibernate.ddl-auto=create-drop
 spring.jpa.show-sql=true
 
 # JWT
-jwt.secret=mySecretKey12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+jwt.secret=mySecretKey12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 jwt.expiration=86400000
 
 # OpenAPI/Swagger
@@ -587,12 +586,71 @@ spring.main.allow-bean-definition-overriding=true
 # Circular References
 spring.main.allow-circular-references=true
 ```
+
+#### Production (PostgreSQL + Redis)
+```properties
+# Server
+server.port=8081
+
+# Database Configuration
+spring.datasource.url=jdbc:postgresql://postgres:5432/postgres
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.username=alper
+spring.datasource.password=pass123
+
+# JPA Configuration
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+# Redis Configuration
+spring.data.redis.host=redis
+spring.data.redis.port=6379
+spring.data.redis.timeout=30000ms
+spring.data.redis.connect-timeout=10000ms
+spring.data.redis.client-type=lettuce
+spring.cache.type=redis
+
+# JWT Configuration
+jwt.secret=mySecretKey12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+jwt.expiration=86400000
+
+# OpenAPI/Swagger Configuration
+springdoc.api-docs.path=/api-docs
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.swagger-ui.operationsSorter=method
+
+# Logging Configuration
+logging.level.com.erandevu=DEBUG
+logging.level.org.springframework.security=DEBUG
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.io.lettuce.core=DEBUG
+
+# Cache Configuration
+spring.cache.redis.time-to-live=600000
+spring.cache.redis.cache-null-values=false
+spring.cache.redis.key-prefix=erandevu:
+spring.cache.redis.use-key-prefix=true
+
+# Bean Configuration
+spring.main.allow-bean-definition-overriding=true
+spring.main.allow-circular-references=true
+spring.jpa.defer-datasource-initialization=true
+```
      
 ## Access Points
 
+#### Local Development
 - **Swagger UI:** http://localhost:8081/swagger-ui.html
 - **API Docs:** http://localhost:8081/api-docs
 - **H2 Console:** http://localhost:8081/h2-console
+- **Base API:** http://localhost:8081/api
+- **Health Check:** http://localhost:8081/actuator/health
+
+#### Docker Production
+- **Swagger UI:** http://localhost:8081/swagger-ui.html
+- **API Docs:** http://localhost:8081/api-docs
+- **PostgreSQL:** http://localhost:5050 (pgAdmin)
 - **Base API:** http://localhost:8081/api
 - **Health Check:** http://localhost:8081/actuator/health
 
