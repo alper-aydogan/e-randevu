@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -21,16 +22,36 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessRuleException(
+            BusinessRuleException ex, WebRequest request) {
+        
+        log.warn("Business rule violation: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("BUSINESS_RULE_VIOLATION")
+                .message(ex.getMessage())
+                .path(request.getDescription(false))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
             ResourceNotFoundException ex, WebRequest request) {
         
+        log.warn("Resource not found: {}", ex.getMessage());
+        
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.NOT_FOUND.value())
-                .error("Resource Not Found")
+                .error("RESOURCE_NOT_FOUND")
                 .message(ex.getMessage())
                 .path(request.getDescription(false))
                 .build();
@@ -42,12 +63,23 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAppointmentConflictException(
             AppointmentConflictException ex, WebRequest request) {
         
+        log.warn("Appointment conflict: {}", ex.getMessage());
+        
+        Map<String, Object> conflictDetails = new HashMap<>();
+        if (ex.getDoctorId() != null) {
+            conflictDetails.put("doctorId", ex.getDoctorId());
+        }
+        if (ex.getAppointmentDateTime() != null) {
+            conflictDetails.put("appointmentDateTime", ex.getAppointmentDateTime());
+        }
+        
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.CONFLICT.value())
-                .error("Appointment Conflict")
+                .error("APPOINTMENT_CONFLICT")
                 .message(ex.getMessage())
                 .path(request.getDescription(false))
+                .details(conflictDetails)
                 .build();
         
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
@@ -57,10 +89,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(
             UserAlreadyExistsException ex, WebRequest request) {
         
+        log.warn("User already exists: {}", ex.getMessage());
+        
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.CONFLICT.value())
-                .error("User Already Exists")
+                .error("USER_ALREADY_EXISTS")
                 .message(ex.getMessage())
                 .path(request.getDescription(false))
                 .build();
@@ -72,12 +106,23 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidAppointmentTimeException(
             InvalidAppointmentTimeException ex, WebRequest request) {
         
+        log.warn("Invalid appointment time: {}", ex.getMessage());
+        
+        Map<String, Object> timeViolationDetails = new HashMap<>();
+        if (ex.getAppointmentDateTime() != null) {
+            timeViolationDetails.put("appointmentDateTime", ex.getAppointmentDateTime());
+        }
+        if (ex.getViolationType() != null) {
+            timeViolationDetails.put("violationType", ex.getViolationType());
+        }
+        
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error("Invalid Appointment Time")
+                .error("INVALID_APPOINTMENT_TIME")
                 .message(ex.getMessage())
                 .path(request.getDescription(false))
+                .details(timeViolationDetails)
                 .build();
         
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
@@ -87,10 +132,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(
             BadCredentialsException ex, WebRequest request) {
         
+        log.warn("Bad credentials attempt");
+        
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Authentication Failed")
+                .error("AUTHENTICATION_FAILED")
                 .message("Invalid username or password")
                 .path(request.getDescription(false))
                 .build();
@@ -102,10 +149,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAuthenticationException(
             AuthenticationException ex, WebRequest request) {
         
+        log.warn("Authentication failed: {}", ex.getMessage());
+        
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Authentication Failed")
+                .error("AUTHENTICATION_FAILED")
                 .message(ex.getMessage())
                 .path(request.getDescription(false))
                 .build();
@@ -117,10 +166,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(
             AccessDeniedException ex, WebRequest request) {
         
+        log.warn("Access denied: {}", ex.getMessage());
+        
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.FORBIDDEN.value())
-                .error("Access Denied")
+                .error("ACCESS_DENIED")
                 .message("You don't have permission to access this resource")
                 .path(request.getDescription(false))
                 .build();
@@ -139,10 +190,12 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
         
+        log.warn("Validation failed: {}", errors);
+        
         ValidationErrorResponse errorResponse = ValidationErrorResponse.validationBuilder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error("Validation Failed")
+                .error("VALIDATION_ERROR")
                 .message("Request validation failed")
                 .validationErrors(errors)
                 .path(request.getDescription(false))
@@ -155,10 +208,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex, WebRequest request) {
         
+        log.error("Unexpected error occurred", ex);
+        
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .error("Internal Server Error")
+                .error("INTERNAL_SERVER_ERROR")
                 .message("An unexpected error occurred")
                 .path(request.getDescription(false))
                 .build();
@@ -177,7 +232,7 @@ public class GlobalExceptionHandler {
         @Schema(description = "HTTP status code", example = "404")
         public Integer status;
 
-        @Schema(description = "Error type", example = "Resource Not Found")
+        @Schema(description = "Error type", example = "RESOURCE_NOT_FOUND")
         public String error;
 
         @Schema(description = "Error message", example = "User not found with id: 1")
@@ -185,6 +240,9 @@ public class GlobalExceptionHandler {
 
         @Schema(description = "Request path", example = "/api/users/1")
         public String path;
+
+        @Schema(description = "Additional error details")
+        public Map<String, Object> details;
         
         public static ErrorResponseBuilder builder() {
             return new ErrorResponseBuilder();
@@ -196,6 +254,7 @@ public class GlobalExceptionHandler {
             private String error;
             private String message;
             private String path;
+            private Map<String, Object> details;
             
             public ErrorResponseBuilder timestamp(LocalDateTime timestamp) {
                 this.timestamp = timestamp;
@@ -222,6 +281,11 @@ public class GlobalExceptionHandler {
                 return this;
             }
             
+            public ErrorResponseBuilder details(Map<String, Object> details) {
+                this.details = details;
+                return this;
+            }
+            
             public ErrorResponse build() {
                 ErrorResponse response = new ErrorResponse();
                 response.timestamp = this.timestamp;
@@ -229,6 +293,7 @@ public class GlobalExceptionHandler {
                 response.error = this.error;
                 response.message = this.message;
                 response.path = this.path;
+                response.details = this.details;
                 return response;
             }
         }
