@@ -569,6 +569,83 @@ curl -X POST http://localhost:8081/api/appointments \
 - **Lazy Loading** - Entity relationship optimization
 - **Batch Processing** - Bulk operations support
 
+## 🔄 Concurrency & Data Consistency
+
+### Multi-Layer Concurrency Control
+```
+┌─────────────────┐
+│ Database Constraints │ ← Primary Defense (Unique Constraints)
+├─────────────────┤
+│ Pessimistic Locking │ ← Secondary Defense (@Lock)
+├─────────────────┤
+│ Optimistic Locking │ ← Tertiary Defense (@Version)
+├─────────────────┤
+│ Application Locks │ ← Quaternary Defense (ReentrantLock)
+└─────────────────┘
+```
+
+### Concurrency Features
+- **Double Booking Prevention** - Multi-layer approach with database constraints
+- **Optimistic Locking** - Version-based conflict detection
+- **Pessimistic Locking** - Critical operation protection
+- **Thread Safety** - ConcurrentHashMap and ReentrantLock utilities
+- **Transaction Management** - SERIALIZABLE isolation for critical operations
+
+### Transaction Strategy
+- **SERIALIZABLE Isolation** - Maximum consistency for appointment creation
+- **READ_COMMITTED Isolation** - Performance for read operations
+- **Comprehensive Rollback** - All exception scenarios handled
+- **ACID Compliance** - Full transaction guarantees
+
+### Locking Strategies
+- **Optimistic Locking** - High read, low write scenarios
+- **Pessimistic Locking** - Critical write operations
+- **Application-Level Locks** - Doctor-specific thread safety
+- **Database Constraints** - Ultimate data integrity
+
+### Error Handling
+```json
+{
+  "timestamp": "2024-01-01T10:00:00",
+  "status": 409,
+  "error": "CONCURRENT_BOOKING",
+  "message": "Appointment slot is currently being booked by another user. Please try again.",
+  "path": "/api/appointments",
+  "details": {
+    "doctorId": 1,
+    "appointmentDateTime": "2024-01-01T10:30:00",
+    "conflictingAppointmentId": 123
+  }
+}
+```
+
+### Concurrency Examples
+```bash
+# Double booking attempt
+curl -X POST http://localhost:8081/api/appointments \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN" \
+  -d '{
+    "doctorId": 1,
+    "patientId": 2,
+    "appointmentDateTime": "2024-01-01T10:30:00"
+  }'
+
+# Response (if already booked):
+{
+  "timestamp": "2024-01-01T10:00:00",
+  "status": 409,
+  "error": "CONCURRENT_BOOKING",
+  "message": "This appointment slot is already booked. Please choose a different time."
+}
+```
+
+### Performance Considerations
+- **Connection Pooling** - Optimized database connections
+- **Lock Timeout** - Deadlock prevention
+- **Async Support** - High-throughput scenarios
+- **Cache Invalidation** - Data consistency maintenance
+
 ## Docker Deployment
 
 ### Prerequisites
