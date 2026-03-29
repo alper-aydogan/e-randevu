@@ -24,12 +24,34 @@ Modern Spring Boot-based hospital appointment management system with JWT authent
 - Status tracking (SCHEDULED, COMPLETED, CANCELLED, NO_SHOW)
 - Doctor-patient matching
 - **Pagination support for large datasets** 🆕
+- **Advanced business rule validation** 🆕
+- **Holiday and availability management** 🆕
+- **Redis caching for performance** 🆕
 
 ### 📊 Schedule Management
 - Doctor working hours
 - Time slot management
 - Availability checking
 - Conflict prevention
+
+### 🔍 Advanced Validation System
+- **Multi-layer validation architecture** 🆕
+- **Jakarta Validation annotations** 🆕
+- **Custom business rule enforcement** 🆕
+- **Structured error responses** 🆕
+- **Input sanitization and security** 🆕
+
+### 🏖️ Holiday Management
+- **Doctor vacation management** 🆕
+- **Holiday type classification** 🆕
+- **Availability checking** 🆕
+- **Recurring holiday support** 🆕
+
+### 🚀 Performance & Caching
+- **Redis distributed caching** 🆕
+- **Cache invalidation strategies** 🆕
+- **Optimized database queries** 🆕
+- **Performance monitoring** 🆕
 
 ## 🛠️ Technology Stack
 
@@ -71,6 +93,12 @@ graph TD
     C --> H[MapStruct Mappers]
     H --> I[DTO ↔ Entity Conversion]
     
+    C --> J[Validation Service]
+    J --> K[Business Rules]
+    
+    C --> L[Cache Management]
+    L --> M[Redis Cache]
+    
     J[Spring Security] --> K[Authentication Filter]
     K --> B
     
@@ -81,15 +109,17 @@ graph TD
     O --> P[JwtServiceTest]
     O --> Q[Service Tests]
     O --> R[Controller Tests]
+    O --> S[Validation Tests]
     
     P --> F
     Q --> C
     R --> B
+    S --> J
     B --> D
     D --> E
     
-    S[Maven Surefire] --> T[Test Execution]
-    T --> O
+    T[Maven Surefire] --> U[Test Execution]
+    U --> O
     O --> P
 ```
 
@@ -417,6 +447,127 @@ CREATE TABLE schedules (
     FOREIGN KEY (doctor_id) REFERENCES users(id)
 );
 ```
+
+### Holidays Table
+```sql
+CREATE TABLE holidays (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    doctor_id BIGINT NOT NULL,
+    holiday_date DATE NOT NULL,
+    reason VARCHAR(200),
+    holiday_type ENUM('PUBLIC', 'PRIVATE', 'VACATION', 'SICK_LEAVE', 'TRAINING') DEFAULT 'PUBLIC',
+    recurring BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_by VARCHAR(50),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (doctor_id) REFERENCES users(id)
+);
+```
+
+## 🔍 Advanced Validation System
+
+### Multi-Layer Validation Architecture
+```
+┌─────────────────┐
+│   Controller    │ ← @Valid DTO Validation
+├─────────────────┤
+│     Service     │ ← Business Rule Validation
+├─────────────────┤
+│   Repository    │ ← Data Integrity Validation
+├─────────────────┤
+│     Utility     │ ← Reusable Validation Methods
+└─────────────────┘
+```
+
+### Validation Features
+- **Jakarta Validation Annotations** - @Valid, @NotBlank, @Email, @Pattern, @Size
+- **Custom Business Rules** - Time constraints, availability checks, conflict prevention
+- **Structured Error Handling** - Detailed error responses with context
+- **Input Sanitization** - Security-focused validation and cleaning
+
+### Business Rules
+- **Appointment Time Constraints**:
+  - Minimum 2 hours advance booking
+  - Maximum 30 days ahead booking
+  - Weekday only (Monday-Friday)
+  - Business hours only (9 AM - 6 PM)
+  
+- **Doctor Availability**:
+  - Schedule-based availability checking
+  - Holiday and vacation management
+  - Working hours validation
+  - Maximum 8 appointments per day
+  
+- **Conflict Prevention**:
+  - Overlapping appointment detection
+  - Same user validation (doctor ≠ patient)
+  - Time slot availability checking
+
+### Error Response Format
+```json
+{
+  "timestamp": "2024-01-01T10:00:00",
+  "status": 400,
+  "error": "VALIDATION_ERROR",
+  "message": "Request validation failed",
+  "path": "/api/appointments",
+  "validationErrors": {
+    "doctorId": "Doctor ID must be positive",
+    "appointmentDateTime": "Appointment date and time must be in the future"
+  },
+  "details": {
+    "violationType": "TOO_SOON",
+    "appointmentDateTime": "2024-01-01T09:00:00"
+  }
+}
+```
+
+### Validation Examples
+```bash
+# Invalid appointment time
+curl -X POST http://localhost:8081/api/appointments \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN" \
+  -d '{
+    "doctorId": 1,
+    "patientId": 2,
+    "appointmentDateTime": "2024-01-01T08:00:00"
+  }'
+
+# Response:
+{
+  "timestamp": "2024-01-01T10:00:00",
+  "status": 400,
+  "error": "INVALID_APPOINTMENT_TIME",
+  "message": "Appointments are only available between 9:00 AM and 6:00 PM",
+  "details": {
+    "appointmentDateTime": "2024-01-01T08:00:00",
+    "violationType": "OUTSIDE_HOURS"
+  }
+}
+```
+
+## 🚀 Performance & Caching
+
+### Redis Caching Strategy
+- **User Cache** - 30 minutes TTL
+- **Doctor Cache** - 1 hour TTL
+- **Appointment Cache** - 15 minutes TTL
+- **Today's Appointments** - 5 minutes TTL
+
+### Cache Management
+- **Automatic Invalidation** - On create/update/delete operations
+- **Manual Cache Clear** - Administrative functions
+- **Cache Statistics** - Performance monitoring
+- **TTL Configuration** - Environment-specific settings
+
+### Performance Optimization
+- **Optimized Queries** - Efficient JPQL with proper indexing
+- **Connection Pooling** - HikariCP configuration
+- **Lazy Loading** - Entity relationship optimization
+- **Batch Processing** - Bulk operations support
 
 ## Docker Deployment
 
