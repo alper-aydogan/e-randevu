@@ -24,12 +24,16 @@ import java.time.LocalDateTime;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
-@ToString(callSuper = false)
+@EqualsAndHashCode(callSuper = false, exclude = {"version"})
+@ToString(callSuper = false, exclude = {"version"})
 @EntityListeners(AuditingEntityListener.class)
 @SQLDelete(sql = "UPDATE appointments SET is_deleted = true WHERE id = ?")
 @Where(clause = "is_deleted = false")
 public class Appointment extends BaseEntity {
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)

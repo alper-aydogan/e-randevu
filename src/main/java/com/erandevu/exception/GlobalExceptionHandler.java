@@ -25,6 +25,103 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ConcurrentBookingException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrentBookingException(
+            ConcurrentBookingException ex, WebRequest request) {
+        
+        log.warn("Concurrent booking detected: {}", ex.getMessage());
+        
+        Map<String, Object> conflictDetails = new HashMap<>();
+        if (ex.getDoctorId() != null) {
+            conflictDetails.put("doctorId", ex.getDoctorId());
+        }
+        if (ex.getAppointmentDateTime() != null) {
+            conflictDetails.put("appointmentDateTime", ex.getAppointmentDateTime());
+        }
+        if (ex.getConflictingAppointmentId() != null) {
+            conflictDetails.put("conflictingAppointmentId", ex.getConflictingAppointmentId());
+        }
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("CONCURRENT_BOOKING")
+                .message("Appointment slot is currently being booked by another user. Please try again.")
+                .path(request.getDescription(false))
+                .details(conflictDetails)
+                .build();
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(OptimisticLockException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLockException(
+            OptimisticLockException ex, WebRequest request) {
+        
+        log.warn("Optimistic lock failure: {}", ex.getMessage());
+        
+        Map<String, Object> lockDetails = new HashMap<>();
+        if (ex.getEntityType() != null) {
+            lockDetails.put("entityType", ex.getEntityType());
+        }
+        if (ex.getEntityId() != null) {
+            lockDetails.put("entityId", ex.getEntityId());
+        }
+        if (ex.getCurrentVersion() != null) {
+            lockDetails.put("currentVersion", ex.getCurrentVersion());
+        }
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("OPTIMISTIC_LOCK_FAILURE")
+                .message("The data was modified by another user. Please refresh and try again.")
+                .path(request.getDescription(false))
+                .details(lockDetails)
+                .build();
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleSpringOptimisticLockException(
+            org.springframework.orm.ObjectOptimisticLockingFailureException ex, WebRequest request) {
+        
+        log.warn("Spring optimistic lock failure: {}", ex.getMessage());
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("OPTIMISTIC_LOCK_FAILURE")
+                .message("The data was modified by another user. Please refresh and try again.")
+                .path(request.getDescription(false))
+                .build();
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(
+            org.springframework.dao.DataIntegrityViolationException ex, WebRequest request) {
+        
+        log.warn("Data integrity violation: {}", ex.getMessage());
+        
+        String message = "Data constraint violation occurred";
+        if (ex.getMessage() != null && ex.getMessage().contains("appointments_doctor_id_appointment_datetime_key")) {
+            message = "This appointment slot is already booked. Please choose a different time.";
+        }
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("DATA_INTEGRITY_VIOLATION")
+                .message(message)
+                .path(request.getDescription(false))
+                .build();
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<ErrorResponse> handleBusinessRuleException(
             BusinessRuleException ex, WebRequest request) {
