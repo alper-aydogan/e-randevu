@@ -3,6 +3,7 @@ package com.erandevu.controller;
 import com.erandevu.dto.request.AppointmentRequest;
 import com.erandevu.dto.response.AppointmentResponse;
 import com.erandevu.dto.response.PageResponse;
+import com.erandevu.entity.User;
 import com.erandevu.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,10 +14,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Appointment management controller.
+ * SECURITY: Patient ID is always extracted from JWT token - never from request body.
+ */
 @RestController
 @RequestMapping("/api/appointments")
 @Tag(name = "Appointments", description = "Appointment management endpoints")
@@ -30,10 +37,14 @@ public class AppointmentController {
     }
 
     @PostMapping
-    @Operation(summary = "Create appointment", description = "Creates a new appointment with conflict checking")
+    @Operation(summary = "Create appointment", description = "Creates a new appointment for the authenticated patient")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
-    public ResponseEntity<AppointmentResponse> createAppointment(@Valid @RequestBody AppointmentRequest request) {
-        AppointmentResponse response = appointmentService.createAppointment(request);
+    public ResponseEntity<AppointmentResponse> createAppointment(
+            @Valid @RequestBody AppointmentRequest request,
+            @AuthenticationPrincipal User user) {
+        // SECURITY: Patient ID extracted from JWT token, not from request body
+        Long patientId = user.getId();
+        AppointmentResponse response = appointmentService.createAppointment(request, patientId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

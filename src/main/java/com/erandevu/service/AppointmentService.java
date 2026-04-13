@@ -49,15 +49,15 @@ public class AppointmentService {
     // ==================== WRITE OPERATIONS ====================
 
     @CacheEvict(value = "appointments", key = "'doctor_' + #request.doctorId")
-    public AppointmentResponse createAppointment(AppointmentRequest request) {
+    public AppointmentResponse createAppointment(AppointmentRequest request, Long patientId) {
         log.info("Creating appointment: doctor={}, patient={}, time={}",
-            request.getDoctorId(), request.getPatientId(), request.getAppointmentDateTime());
+            request.getDoctorId(), patientId, request.getAppointmentDateTime());
 
         try {
-            validator.validateCreation(request, request.getDoctorId(), request.getPatientId());
+            validator.validateCreation(request, request.getDoctorId(), patientId);
 
             User doctor = findDoctor(request.getDoctorId());
-            User patient = findPatient(request.getPatientId());
+            User patient = findPatient(patientId);
 
             Appointment appointment = Appointment.builder()
                 .doctor(doctor)
