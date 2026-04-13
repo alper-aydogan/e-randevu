@@ -14,19 +14,21 @@ Modern Spring Boot-based hospital appointment management system with JWT authent
 
 ### 👥 User Management
 - CRUD operations for users
-- Role assignment and management
+- Role assignment and management (server-side only for security)
 - Account status control
 - Profile management
+- **Security: Role assignment protected from client manipulation** 🔒
 
 ### 📅 Appointment System
 - Appointment creation and management
-- Time conflict prevention
+- Time conflict prevention with pessimistic locking
 - Status tracking (SCHEDULED, COMPLETED, CANCELLED, NO_SHOW)
 - Doctor-patient matching
 - **Pagination support for large datasets** 🆕
 - **Advanced business rule validation** 🆕
 - **Holiday and availability management** 🆕
 - **Redis caching for performance** 🆕
+- **Security: Patient ID from JWT token (IDOR protection)** 🔒
 
 ### 📊 Schedule Management
 - Doctor working hours
@@ -36,10 +38,12 @@ Modern Spring Boot-based hospital appointment management system with JWT authent
 
 ### 🔍 Advanced Validation System
 - **Multi-layer validation architecture** 🆕
+- **Single-responsibility validators** (Time, Conflict, Availability, Rules) 🆕
 - **Jakarta Validation annotations** 🆕
 - **Custom business rule enforcement** 🆕
 - **Structured error responses** 🆕
 - **Input sanitization and security** 🆕
+- **Centralized ValidationMessages constants** 🆕
 
 ### 🏖️ Holiday Management
 - **Doctor vacation management** 🆕
@@ -56,7 +60,9 @@ Modern Spring Boot-based hospital appointment management system with JWT authent
 ## 🛠️ Technology Stack
 
 - **Backend:** Spring Boot 3.4.0, Java 21
-- **Security:** Spring Security, JWT
+- **Architecture:** Clean Architecture / Modular Monolith
+- **Pattern:** Use Case (Application Layer)
+- **Security:** Spring Security, JWT, Pessimistic Locking
 - **Database:** PostgreSQL 16, Redis 7, Spring Data JPA
 - **Cache:** Redis with Lettuce client
 - **Documentation:** OpenAPI 3.0, Swagger UI
@@ -244,9 +250,11 @@ Content-Type: application/json
   "email": "john@hospital.com",
   "firstName": "John",
   "lastName": "Doe",
-  "phoneNumber": "+1234567890",
-  "role": "DOCTOR"
+  "phoneNumber": "+1234567890"
 }
+```
+
+**Note:** Role is automatically assigned as PATIENT by default for security. Admin role assignment is done through a separate secure endpoint.
 ```
 
 #### Login
@@ -302,10 +310,12 @@ Content-Type: application/json
 
 {
   "doctorId": 1,
-  "patientId": 2,
   "appointmentDateTime": "2024-12-25T10:30:00",
   "notes": "Regular checkup"
 }
+```
+
+**Note:** Patient ID is automatically extracted from the JWT token of the authenticated user. This prevents IDOR (Insecure Direct Object Reference) attacks.
 ```
 
 #### Get Appointment by ID
@@ -932,6 +942,99 @@ This project is licensed under the MIT License.
 ## Support
 
 For questions and support, please open an issue in the repository.
+
+---
+
+## 🏗️ Clean Architecture Implementation
+
+### Architecture Overview
+
+The project has been refactored to follow **Clean Architecture** and **Modular Monolith** principles:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    PRESENTATION LAYER                    │
+│  (Controllers, DTOs, Mappers, Exception Handlers)     │
+├─────────────────────────────────────────────────────────┤
+│                   APPLICATION LAYER                      │
+│  (Use Cases: CreateAppointmentUseCase, etc.)            │
+├─────────────────────────────────────────────────────────┤
+│                     DOMAIN LAYER                         │
+│  (Entities with behavior, Domain Services, Policies)    │
+├─────────────────────────────────────────────────────────┤
+│                   INFRASTRUCTURE LAYER                   │
+│  (Repositories, Security, Caching, Events)              │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Key Architectural Improvements
+
+#### 1. **Use Case Pattern**
+- Each business operation has its own use case class
+- Clear separation of concerns
+- Testable and maintainable
+
+#### 2. **Domain-Driven Design**
+- Rich domain model with behavior methods
+- `Appointment.cancel()`, `Appointment.reschedule()`
+- Business rules encapsulated in entities
+
+#### 3. **Single-Responsibility Validators**
+- `AppointmentTimeValidator` - Time constraints
+- `AppointmentConflictValidator` - Overlapping checks
+- `DoctorAvailabilityValidator` - Schedule validation
+- `AppointmentRuleValidator` - Business rules
+
+#### 4. **Domain Events**
+- `AppointmentCreatedEvent`
+- `AppointmentCancelledEvent`
+- Loose coupling between components
+
+#### 5. **DTO Layer Improvements**
+- **Immutable Response DTOs**: `@Getter` + `@Builder` + private constructors
+- **Mutable Request DTOs**: `@Data` + validation annotations
+- **BaseAuditResponse**: Inheritance for consistent audit fields
+- **ValidationMessages**: Centralized validation constants
+
+### Security Enhancements
+
+#### Removed from DTOs (Security Fixes):
+- ❌ `Role role` from `RegisterRequest` - Prevents privilege escalation
+- ❌ `Long patientId` from `AppointmentRequest` - Prevents IDOR attacks
+
+#### JWT-Based Security:
+```java
+// Patient ID extracted from JWT token, not from request
+@AuthenticationPrincipal User user
+Long patientId = user.getId();
+```
+
+### DTO Design Patterns
+
+#### Request DTO (Mutable):
+```java
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class AppointmentRequest {
+    @NotNull(message = ValidationMessages.DOCTOR_ID_REQUIRED)
+    private Long doctorId;
+    // patientId REMOVED - extracted from JWT
+}
+```
+
+#### Response DTO (Immutable):
+```java
+@Getter
+@SuperBuilder
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class AppointmentResponse extends BaseAuditResponse {
+    private Long id;
+    // No setters - immutable!
+}
+```
 
 ---
 
