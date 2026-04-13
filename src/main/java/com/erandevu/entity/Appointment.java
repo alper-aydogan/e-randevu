@@ -173,4 +173,33 @@ public class Appointment extends BaseEntity {
         return this.status == AppointmentStatus.SCHEDULED ||
                this.status == AppointmentStatus.COMPLETED;
     }
+
+    // Manual getters for Lombok workaround
+    public Long getId() {
+        return super.getId();
+    }
+
+    public User getDoctor() {
+        return doctor;
+    }
+
+    public User getPatient() {
+        return patient;
+    }
+
+    public LocalDateTime getAppointmentDateTime() {
+        return appointmentDateTime;
+    }
+
+    public AppointmentStatus getStatus() {
+        return status;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
 }

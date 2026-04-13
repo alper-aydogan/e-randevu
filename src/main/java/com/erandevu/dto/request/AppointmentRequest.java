@@ -43,4 +43,17 @@ public class AppointmentRequest {
     @Size(max = 500, message = ValidationMessages.NOTES_SIZE)
     @Schema(description = "Optional notes for the doctor", example = "Regular checkup for annual physical examination")
     private String notes;
+
+    // Manual getters for Lombok workaround
+    public Long getDoctorId() {
+        return doctorId;
+    }
+
+    public LocalDateTime getAppointmentDateTime() {
+        return appointmentDateTime;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
 }

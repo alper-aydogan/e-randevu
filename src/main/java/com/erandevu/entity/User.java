@@ -34,6 +34,11 @@ import java.util.List;
 @Where(clause = "is_deleted = false")
 public class User extends BaseEntity implements UserDetails {
 
+    // Manual getters for Lombok workaround
+    public Long getId() {
+        return super.getId();
+    }
+
     @Column(unique = true, nullable = false)
     private String username;
 

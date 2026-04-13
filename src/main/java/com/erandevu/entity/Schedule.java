@@ -51,4 +51,17 @@ public class Schedule extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private Boolean active = true;
+
+    // Manual getters for Lombok workaround
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public LocalTime getEndTime() {
+        return endTime;
+    }
+
+    public Integer getAppointmentDurationMinutes() {
+        return appointmentDurationMinutes;
+    }
 }
