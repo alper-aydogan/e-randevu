@@ -1,0 +1,13 @@
+# Application Test Configuration
+
+spring:
+  profiles:
+    active: test
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    com.erandevu: DEBUG
