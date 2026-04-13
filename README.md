@@ -45,6 +45,14 @@ Modern Spring Boot-based hospital appointment management system with JWT authent
 - **Input sanitization and security** 🆕
 - **Centralized ValidationMessages constants** 🆕
 
+### ⚠️ Production-Grade Exception Handling 🆕
+- **Type-safe ErrorCode enum system** (E001, S001, V001, X001)
+- **BaseException hierarchy** for all custom exceptions
+- **Centralized GlobalExceptionHandler** with reusable builders
+- **TraceId support** for distributed tracing and observability
+- **Error taxonomy**: BUSINESS, VALIDATION, SECURITY, SYSTEM
+- **Structured error responses** with machine-readable codes
+
 ### 🏖️ Holiday Management
 - **Doctor vacation management** 🆕
 - **Holiday type classification** 🆕
@@ -62,7 +70,8 @@ Modern Spring Boot-based hospital appointment management system with JWT authent
 - **Backend:** Spring Boot 3.4.0, Java 21
 - **Architecture:** Clean Architecture / Modular Monolith
 - **Pattern:** Use Case (Application Layer)
-- **Security:** Spring Security, JWT, Pessimistic Locking
+- **Security:** Spring Security, JWT, Pessimistic Locking, Fail-safe Filters
+- **Exception Handling:** Enum-based ErrorCode, BaseException hierarchy, TraceId support
 - **Database:** PostgreSQL 16, Redis 7, Spring Data JPA
 - **Cache:** Redis with Lettuce client
 - **Documentation:** OpenAPI 3.0, Swagger UI
@@ -380,11 +389,24 @@ Content-Type: application/json
 
 ## Security
 
-### JWT Authentication
-- **Token Generation:** Upon successful login
-- **Token Validation:** Required for protected endpoints
-- **Token Expiration:** 24 hours
-- **Role-based Authorization:** Different access levels for different roles
+### JWT Authentication (Production-Grade) 🆕
+- **Fail-Safe JWT Filter:** Never breaks request chain, comprehensive exception handling
+- **Early Token Validation:** Structural validation before DB calls (performance optimized)
+- **Security Context Cleanup:** Automatic cleanup on all failure paths
+- **Token Expiration:** 24 hours with refresh token capability ready
+- **Trace ID Support:** Request correlation via `X-Trace-Id` header
+- **Comprehensive Exception Handling:**
+  - `ExpiredJwtException` - Token expiration
+  - `SignatureException` - Invalid signature
+  - `MalformedJwtException` - Malformed tokens
+  - `UsernameNotFoundException` - User not found
+
+### Enhanced JWT Security Features 🆕
+- **Stateless Authentication:** No server-side session storage
+- **Thread Safety:** SecurityContextHolder properly managed
+- **Token Structure Validation:** 3-part JWT validation (header.payload.signature)
+- **Graceful Degradation:** Invalid tokens don't break the application
+- **Observability:** All JWT events logged with trace ID
 
 ### User Roles
 - **ADMIN:** Full system access, user management
@@ -394,7 +416,7 @@ Content-Type: application/json
 ### Password Security
 - BCrypt encryption for all passwords
 - No plain text password storage
-- Secure password validation
+- Secure password validation with pattern requirements
 
 ## Database Schema
 
@@ -515,14 +537,19 @@ CREATE TABLE holidays (
   - Same user validation (doctor ≠ patient)
   - Time slot availability checking
 
-### Error Response Format
+### Error Response Format (Production-Grade) 🆕
+
+All API errors follow a standardized format with machine-readable error codes and trace IDs:
+
 ```json
 {
   "timestamp": "2024-01-01T10:00:00",
   "status": 400,
+  "errorCode": "V001",
   "error": "VALIDATION_ERROR",
   "message": "Request validation failed",
   "path": "/api/appointments",
+  "traceId": "550e8400-e29b-41d4-a716-446655440000",
   "validationErrors": {
     "doctorId": "Doctor ID must be positive",
     "appointmentDateTime": "Appointment date and time must be in the future"
@@ -532,6 +559,18 @@ CREATE TABLE holidays (
     "appointmentDateTime": "2024-01-01T09:00:00"
   }
 }
+```
+
+**Error Code Taxonomy:**
+- `E###` - Business errors (E001: Resource not found)
+- `V###` - Validation errors (V001: Validation failed)
+- `S###` - Security errors (S001: Authentication failed)
+- `X###` - System errors (X001: Internal server error)
+
+**Trace ID Header:**
+Every response includes `X-Trace-Id` header for request tracking:
+```
+X-Trace-Id: 550e8400-e29b-41d4-a716-446655440000
 ```
 
 ### Validation Examples
