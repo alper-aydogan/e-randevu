@@ -3,7 +3,8 @@ package com.erandevu.service.validation;
 import com.erandevu.dto.request.AppointmentRequest;
 import com.erandevu.entity.Appointment;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,8 +13,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class AppointmentValidator {
+
+    private static final Logger log = LoggerFactory.getLogger(AppointmentValidator.class);
 
     private final AppointmentTimeValidator timeValidator;
     private final AppointmentConflictValidator conflictValidator;
