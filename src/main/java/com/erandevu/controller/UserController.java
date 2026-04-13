@@ -56,7 +56,7 @@ public class UserController {
             @RequestParam(defaultValue = "id") String sortBy,
             @Parameter(description = "Sort direction", example = "asc") 
             @RequestParam(defaultValue = "asc") String sortDir) {
-        PageResponse<UserResponse> response = userService.getAllUsersPaginated(page, size, sortBy, sortDir);
+        PageResponse<UserResponse> response = userService.getAllUsers(page, size, sortBy, sortDir);
         return ResponseEntity.ok(response);
     }
 

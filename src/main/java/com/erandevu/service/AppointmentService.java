@@ -7,76 +7,96 @@ import com.erandevu.entity.Appointment;
 import com.erandevu.entity.User;
 import com.erandevu.enums.AppointmentStatus;
 import com.erandevu.exception.AppointmentConflictException;
-import com.erandevu.exception.InvalidAppointmentTimeException;
 import com.erandevu.exception.ResourceNotFoundException;
 import com.erandevu.mapper.AppointmentMapper;
 import com.erandevu.repository.AppointmentRepository;
-import com.erandevu.repository.UserRepository;
 import com.erandevu.util.PageResponseUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Randevu servisi - Sadece orkestrasyon mantığı içerir.
+ * Tüm validasyonlar AppointmentValidationService'e devredilir.
+ * Transaction ve caching yönetimi burada yapılır.
+ */
 @Service
+@RequiredArgsConstructor
+@Slf4j
 @Transactional
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
-    private final UserRepository userRepository;
+    private final AppointmentValidationService validationService;
     private final AppointmentMapper appointmentMapper;
 
-    public AppointmentService(AppointmentRepository appointmentRepository, UserRepository userRepository, 
-                            AppointmentMapper appointmentMapper) {
-        this.appointmentRepository = appointmentRepository;
-        this.userRepository = userRepository;
-        this.appointmentMapper = appointmentMapper;
-    }
-
+    /**
+     * Yeni randevu oluşturur.
+     * Tüm validasyonlar AppointmentValidationService tarafından yapılır.
+     *
+     * @param request randevu isteği
+     * @return oluşturulan randevu yanıtı
+     * @throws AppointmentConflictException çakışma durumunda
+     */
     @CacheEvict(value = "appointments", allEntries = true)
     public AppointmentResponse createAppointment(AppointmentRequest request) {
-        // Validate appointment time is in future
-        if (request.getAppointmentDateTime().isBefore(LocalDateTime.now())) {
-            throw new InvalidAppointmentTimeException("Appointment time must be in the future");
-        }
+        log.info("Creating appointment: doctor={}, patient={}, time={}",
+                request.getDoctorId(), request.getPatientId(), request.getAppointmentDateTime());
 
-        // Get doctor and patient
-        User doctor = userRepository.findById(request.getDoctorId())
-                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + request.getDoctorId()));
+        try {
+            // 1. Validasyon (Validation Service)
+            validationService.validateAppointmentCreation(
+                    request,
+                    request.getDoctorId(),
+                    request.getPatientId()
+            );
 
-        User patient = userRepository.findById(request.getPatientId())
-                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + request.getPatientId()));
+            // 2. Doktor ve hasta getir
+            User doctor = validationService.validateDoctorExists(request.getDoctorId());
+            User patient = validationService.validatePatientExists(request.getPatientId());
 
-        // Check for appointment conflicts
-        List<Appointment> conflictingAppointments = appointmentRepository.findOverlappingAppointments(
-                request.getDoctorId(),
-                request.getAppointmentDateTime(),
-                request.getAppointmentDateTime().plusMinutes(30)
-        );
+            // 3. Entity oluştur
+            Appointment appointment = Appointment.builder()
+                    .doctor(doctor)
+                    .patient(patient)
+                    .appointmentDateTime(request.getAppointmentDateTime())
+                    .notes(request.getNotes())
+                    .status(AppointmentStatus.SCHEDULED)
+                    .build();
 
-        if (!conflictingAppointments.isEmpty()) {
+            // 4. Kaydet
+            Appointment savedAppointment = appointmentRepository.save(appointment);
+            log.info("Appointment created successfully: id={}", savedAppointment.getId());
+
+            return appointmentMapper.toAppointmentResponse(savedAppointment);
+
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Concurrent booking detected: doctor={}, time={}",
+                    request.getDoctorId(), request.getAppointmentDateTime());
             throw new AppointmentConflictException(
-                    "Doctor already has an appointment at this time: " + request.getAppointmentDateTime()
+                    "This appointment slot is already booked. Please choose a different time.",
+                    request.getDoctorId(),
+                    request.getAppointmentDateTime()
+            );
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.warn("Optimistic locking failure during appointment creation");
+            throw new AppointmentConflictException(
+                    "Appointment slot is currently being booked by another user. Please try again.",
+                    request.getDoctorId(),
+                    request.getAppointmentDateTime()
             );
         }
-
-        // Create appointment
-        Appointment appointment = new Appointment();
-        appointment.setDoctor(doctor);
-        appointment.setPatient(patient);
-        appointment.setAppointmentDateTime(request.getAppointmentDateTime());
-        appointment.setNotes(request.getNotes());
-        appointment.setStatus(AppointmentStatus.SCHEDULED);
-        Appointment savedAppointment = appointmentRepository.save(appointment);
-
-        return appointmentMapper.toAppointmentResponse(savedAppointment);
     }
 
     @Cacheable(value = "appointments", key = "#id")
@@ -86,11 +106,15 @@ public class AppointmentService {
         return appointmentMapper.toAppointmentResponse(appointment);
     }
 
-    @Cacheable(value = "appointments", key = "#doctorId")
+    /**
+     * Doktora ait randevuları getirir.
+     *
+     * @param doctorId doktor ID
+     * @return randevu listesi
+     */
+    @Cacheable(value = "appointments", key = "'doctor_' + #doctorId")
     public List<AppointmentResponse> getAppointmentsByDoctor(Long doctorId) {
-        // Verify doctor exists
-        userRepository.findById(doctorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + doctorId));
+        validationService.validateDoctorExists(doctorId);
 
         List<Appointment> appointments = appointmentRepository.findByDoctorIdAndStatusNotIn(
                 doctorId,
@@ -102,11 +126,17 @@ public class AppointmentService {
                 .toList();
     }
 
-    @Cacheable(value = "appointments", key = "#doctorId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort")
+    /**
+     * Doktora ait randevuları sayfalama ile getirir.
+     *
+     * @param doctorId doktor ID
+     * @param page sayfa numarası
+     * @param size sayfa boyutu
+     * @return sayfalanmış randevu yanıtı
+     */
+    @Cacheable(value = "appointments", key = "'doctor_paged_' + #doctorId + '_' + #page + '_' + #size")
     public PageResponse<AppointmentResponse> getAppointmentsByDoctorPaginated(Long doctorId, int page, int size, String sortBy, String sortDir) {
-        // Verify doctor exists
-        userRepository.findById(doctorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + doctorId));
+        validationService.validateDoctorExists(doctorId);
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Appointment> appointmentPage = appointmentRepository.findByDoctorIdAndStatusNotIn(
@@ -118,11 +148,15 @@ public class AppointmentService {
         return PageResponseUtil.createPageResponse(appointmentResponsePage);
     }
 
-    @Cacheable(value = "appointments", key = "#patientId")
+    /**
+     * Hastaya ait randevuları getirir.
+     *
+     * @param patientId hasta ID
+     * @return randevu listesi
+     */
+    @Cacheable(value = "appointments", key = "'patient_' + #patientId")
     public List<AppointmentResponse> getAppointmentsByPatient(Long patientId) {
-        // Verify patient exists
-        userRepository.findById(patientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + patientId));
+        validationService.validatePatientExists(patientId);
 
         List<Appointment> appointments = appointmentRepository.findByPatientIdAndStatusNotIn(
                 patientId,
@@ -134,11 +168,17 @@ public class AppointmentService {
                 .toList();
     }
 
-    @Cacheable(value = "appointments", key = "#patientId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort")
+    /**
+     * Hastaya ait randevuları sayfalama ile getirir.
+     *
+     * @param patientId hasta ID
+     * @param page sayfa numarası
+     * @param size sayfa boyutu
+     * @return sayfalanmış randevu yanıtı
+     */
+    @Cacheable(value = "appointments", key = "'patient_paged_' + #patientId + '_' + #page + '_' + #size")
     public PageResponse<AppointmentResponse> getAppointmentsByPatientPaginated(Long patientId, int page, int size, String sortBy, String sortDir) {
-        // Verify patient exists
-        userRepository.findById(patientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + patientId));
+        validationService.validatePatientExists(patientId);
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Appointment> appointmentPage = appointmentRepository.findByPatientIdAndStatusNotIn(
@@ -150,29 +190,74 @@ public class AppointmentService {
         return PageResponseUtil.createPageResponse(appointmentResponsePage);
     }
 
-    @CacheEvict(value = "appointments", key = "#id")
+    /**
+     * Randevuyu iptal eder.
+     * Validasyon AppointmentValidationService tarafından yapılır.
+     *
+     * @param id randevu ID
+     * @param cancellationReason iptal nedeni
+     * @return güncellenmiş randevu
+     */
+    @CacheEvict(value = "appointments", allEntries = true)
     public AppointmentResponse cancelAppointment(Long id, String cancellationReason) {
-        Appointment appointment = appointmentRepository.findById(id)
+        log.info("Cancelling appointment: id={}", id);
+
+        Appointment appointment = appointmentRepository.findByIdWithLock(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
 
-        if (appointment.getStatus() == AppointmentStatus.CANCELLED) {
-            throw new InvalidAppointmentTimeException("Appointment is already cancelled");
-        }
-
-        if (appointment.getStatus() == AppointmentStatus.COMPLETED) {
-            throw new InvalidAppointmentTimeException("Cannot cancel completed appointment");
-        }
+        // Validasyon
+        validationService.validateAppointmentCancellation(appointment);
 
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointment.setCancellationReason(cancellationReason);
         Appointment updatedAppointment = appointmentRepository.save(appointment);
+
+        log.info("Appointment cancelled successfully: id={}", id);
         return appointmentMapper.toAppointmentResponse(updatedAppointment);
     }
 
-    @CacheEvict(value = "appointments", key = "#id")
+    /**
+     * Randevuyu siler (soft delete).
+     * Cache temizlenir.
+     *
+     * @param id randevu ID
+     */
+    @CacheEvict(value = "appointments", allEntries = true)
     public void deleteAppointment(Long id) {
+        log.info("Deleting appointment: id={}", id);
+
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
+
         appointmentRepository.delete(appointment);
+        log.info("Appointment deleted successfully: id={}", id);
+    }
+
+    /**
+     * Randevu günceller.
+     * Validasyon AppointmentValidationService tarafından yapılır.
+     *
+     * @param id randevu ID
+     * @param request güncelleme isteği
+     * @return güncellenmiş randevu
+     */
+    @CacheEvict(value = "appointments", allEntries = true)
+    public AppointmentResponse updateAppointment(Long id, AppointmentRequest request) {
+        log.info("Updating appointment: id={}", id);
+
+        Appointment existingAppointment = appointmentRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
+
+        // Validasyon
+        validationService.validateAppointmentUpdate(existingAppointment, request);
+
+        // Güncelle
+        existingAppointment.setAppointmentDateTime(request.getAppointmentDateTime());
+        existingAppointment.setNotes(request.getNotes());
+
+        Appointment updatedAppointment = appointmentRepository.save(existingAppointment);
+        log.info("Appointment updated successfully: id={}", id);
+
+        return appointmentMapper.toAppointmentResponse(updatedAppointment);
     }
 }
