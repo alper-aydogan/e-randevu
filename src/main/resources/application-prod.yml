@@ -1,0 +1,35 @@
+spring:
+  profiles:
+    active: prod
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/yourdbname
+    username: yourdbuser
+    password: yourdbpassword
+    hikari:
+      maximumPoolSize: 10
+      minimumIdle: 2
+      idleTimeout: 30000
+
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 2000
+
+  logging:
+    logstash:
+      enabled: true
+      destination: localhost:5044
+    log:
+      level:
+        ROOT: INFO
+        com.yourpackage: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics
+
+swagger:
+  enabled: false
