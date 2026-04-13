@@ -54,33 +54,4 @@ public class RegisterRequest {
     @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone number should be valid")
     @Schema(example = "+1234567890")
     private String phoneNumber;
-
-    // Manual getters (since Lombok not working)
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
 }

@@ -1,39 +1,44 @@
 package com.erandevu.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
-@Data
+/**
+ * Immutable error response for API errors.
+ * All fields are private - use builder pattern for creation.
+ */
+@Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Schema(description = "Error response for API errors")
 public class ErrorResponse {
 
     @Schema(description = "Timestamp of the error", example = "2024-01-01T10:00:00")
-    public LocalDateTime timestamp;
+    private LocalDateTime timestamp;
 
     @Schema(description = "HTTP status code", example = "404")
-    public Integer status;
+    private Integer status;
 
     @Schema(description = "Error type", example = "RESOURCE_NOT_FOUND")
-    public String error;
+    private String error;
 
     @Schema(description = "Error message", example = "User not found with id: 1")
-    public String message;
+    private String message;
 
     @Schema(description = "Request path", example = "/api/users/1")
-    public String path;
+    private String path;
 
     @Schema(description = "Validation errors for field-level validation")
-    public Map<String, String> validationErrors;
+    private Map<String, String> validationErrors;
 
     @Schema(description = "Additional error details")
-    public Map<String, Object> details;
+    private Map<String, Object> details;
 }

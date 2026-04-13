@@ -2,17 +2,21 @@ package com.erandevu.dto.response;
 
 import com.erandevu.enums.AppointmentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Data
+/**
+ * Immutable appointment response.
+ */
+@Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Schema(description = "Appointment response")
 public class AppointmentResponse {
     
