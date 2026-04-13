@@ -58,7 +58,7 @@ public class AppointmentController {
             @RequestParam(defaultValue = "appointmentDateTime") String sortBy,
             @Parameter(description = "Sort direction", example = "desc") 
             @RequestParam(defaultValue = "desc") String sortDir) {
-        PageResponse<AppointmentResponse> response = appointmentService.getAppointmentsByDoctorPaginated(doctorId, page, size, sortBy, sortDir);
+        PageResponse<AppointmentResponse> response = appointmentService.getDoctorAppointments(doctorId, page, size, sortBy, sortDir);
         return ResponseEntity.ok(response);
     }
 
@@ -75,7 +75,7 @@ public class AppointmentController {
             @RequestParam(defaultValue = "appointmentDateTime") String sortBy,
             @Parameter(description = "Sort direction", example = "desc") 
             @RequestParam(defaultValue = "desc") String sortDir) {
-        PageResponse<AppointmentResponse> response = appointmentService.getAppointmentsByPatientPaginated(patientId, page, size, sortBy, sortDir);
+        PageResponse<AppointmentResponse> response = appointmentService.getPatientAppointments(patientId, page, size, sortBy, sortDir);
         return ResponseEntity.ok(response);
     }
 
