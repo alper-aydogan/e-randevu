@@ -65,6 +65,48 @@ Modern Spring Boot-based hospital appointment management system with JWT authent
 - **Optimized database queries** 🆕
 - **Performance monitoring** 🆕
 
+### 🧪 Comprehensive Testing Strategy 🆕
+
+#### Multi-Layer Testing Pyramid
+```
+    /\
+   /  \     E2E Tests (API Integration)
+  /____\ 
+   /  \     Integration Tests (DB, Cache, Security)
+  /____\ 
+   /  \     Unit Tests (Services, Validators, Mappers)
+  /____\ 
+```
+
+#### Current Test Coverage
+- **Unit Tests:** JwtServiceTest (10 test cases), AppointmentServiceTest (8 test cases)
+- **Security Tests:** JWT validation, authentication flow, authorization
+- **Business Logic Tests:** Appointment validation, conflict detection, time constraints
+- **Exception Handling Tests:** Custom exceptions, error responses, trace IDs
+
+#### Testing Commands
+```bash
+# Run all tests
+mvn test
+
+# Run specific test class
+mvn test -Dtest=JwtServiceTest
+mvn test -Dtest=AppointmentServiceTest
+
+# Run tests with coverage
+mvn clean test jacoco:report
+
+# View coverage report
+open target/site/jacoco/index.html
+```
+
+#### Planned Test Enhancements
+- **Integration Tests:** TestContainers with PostgreSQL and Redis
+- **Contract Tests:** API schema validation
+- **Concurrency Tests:** Race condition detection
+- **Security Tests:** JWT bypass attempts, penetration testing
+- **Performance Tests:** Load testing with JMeter/Gatling
+
 ## 🛠️ Technology Stack
 
 - **Backend:** Spring Boot 3.4.0, Java 21
@@ -762,39 +804,6 @@ docker compose --profile production up --build
 
 # Or with environment file
 docker compose --env-file .env up --build
-```
-
-## Testing
-
-### Unit Tests
-- **JwtServiceTest:** Comprehensive JWT service testing with 10 test cases
-  - Token generation and validation
-  - Username extraction
-  - Token expiration handling
-  - Custom claims testing
-  - Security validation
-
-- **AppointmentServiceTest:** Comprehensive appointment service testing with 8 test cases
-  - Appointment creation and validation
-  - Time conflict prevention
-  - Exception handling (InvalidAppointmentTimeException, AppointmentConflictException, ResourceNotFoundException)
-  - Appointment cancellation scenarios
-  - Business logic validation
-
-### Running Tests
-```bash
-# Run all tests
-mvn test
-
-# Run specific test class
-mvn test -Dtest=JwtServiceTest
-mvn test -Dtest=AppointmentServiceTest
-
-# Run tests with coverage
-mvn clean test jacoco:report
-
-# View coverage report
-open target/site/jacoco/index.html
 ```
 
 ### Sample Users (Auto-generated)
