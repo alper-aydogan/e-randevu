@@ -5,34 +5,63 @@ import com.erandevu.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+/**
+ * Kullanıcı repository arayüzü.
+ * Soft delete @Where annotasyonu ile otomatik yönetilir.
+ * Gereksiz metod tekrarları kaldırılmıştır - sadece sayfalama kullanılır.
+ */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+
+    /**
+     * Kullanıcı adına göre kullanıcı bulur.
+     * Soft delete otomatik filtrelenir (@Where clause).
+     */
     Optional<User> findByUsername(String username);
+
+    /**
+     * Email'e göre kullanıcı bulur.
+     * Soft delete otomatik filtrelenir.
+     */
     Optional<User> findByEmail(String email);
+
+    /**
+     * Kullanıcı adının varlığını kontrol eder.
+     * Soft delete otomatik filtrelenir.
+     */
     boolean existsByUsername(String username);
+
+    /**
+     * Email'in varlığını kontrol eder.
+     * Soft delete otomatik filtrelenir.
+     */
     boolean existsByEmail(String email);
+
+    /**
+     * Aktif kullanıcıyı kullanıcı adına göre bulur.
+     * Soft delete otomatik filtrelenir.
+     */
     Optional<User> findByUsernameAndEnabledTrue(String username);
-    Optional<User> findByIdAndEnabledTrue(Long id);
+
+    /**
+     * Rol ve aktiflik durumuna göre kullanıcıları getirir (List versiyonu).
+     * Soft delete otomatik filtrelenir.
+     */
     java.util.List<User> findByRoleAndEnabledTrue(Role role);
-    java.util.List<User> findByEnabledTrue();
-    
-    // Pagination methods
-    Page<User> findByEnabledTrue(Pageable pageable);
+
+    /**
+     * Rol ve aktiflik durumuna göre kullanıcıları getirir (Sayfalama versiyonu).
+     * Soft delete otomatik filtrelenir.
+     */
     Page<User> findByRoleAndEnabledTrue(Role role, Pageable pageable);
-    
-    @Query("SELECT u FROM User u WHERE u.username = :username AND u.enabled = true AND u.isDeleted = false")
-    Optional<User> findActiveUserByUsername(@Param("username") String username);
-    
-    @Modifying
-    @Transactional
-    @Query("UPDATE User u SET u.isDeleted = true WHERE u.id = :id")
-    void softDeleteUser(@Param("id") Long id);
+
+    /**
+     * Aktif tüm kullanıcıları sayfalama ile getirir.
+     * Soft delete otomatik filtrelenir.
+     */
+    Page<User> findByEnabledTrue(Pageable pageable);
 }

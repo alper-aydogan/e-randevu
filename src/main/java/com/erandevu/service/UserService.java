@@ -26,7 +26,7 @@ public class UserService {
     }
 
     public UserResponse getUserById(Long id) {
-        User user = userRepository.findByIdAndEnabledTrue(id)
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         return userMapper.toUserResponse(user);
     }
@@ -37,11 +37,11 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
-    public List<UserResponse> getAllUsers() {
-        List<User> users = userRepository.findByEnabledTrue();
-        return users.stream()
-                .map(userMapper::toUserResponse)
-                .toList();
+    public PageResponse<UserResponse> getAllUsers(int page, int size, String sortBy, String sortDir) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> userPage = userRepository.findByEnabledTrue(pageable);
+        Page<UserResponse> userResponsePage = userMapper.toUserResponsePage(userPage);
+        return PageResponseUtil.createPageResponse(userResponsePage);
     }
 
     public PageResponse<UserResponse> getAllUsersPaginated(int page, int size, String sortBy, String sortDir) {

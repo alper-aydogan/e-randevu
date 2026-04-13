@@ -6,6 +6,7 @@ import com.erandevu.entity.Appointment;
 import com.erandevu.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 import org.springframework.data.domain.Page;
@@ -57,4 +58,17 @@ public interface AppointmentMapper {
     default Page<AppointmentResponse> toAppointmentResponsePage(Page<Appointment> appointmentPage) {
         return appointmentPage.map(this::toAppointmentResponse);
     }
+    
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "endDateTime", ignore = true)
+    @Mapping(target = "doctor", ignore = true)
+    @Mapping(target = "patient", ignore = true)
+    @Mapping(target = "cancellationReason", ignore = true)
+    @Mapping(target = "version", ignore = true)
+    void updateAppointmentFromRequest(AppointmentRequest request, @MappingTarget Appointment appointment);
 }

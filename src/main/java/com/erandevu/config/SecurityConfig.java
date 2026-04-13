@@ -71,7 +71,7 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.findActiveUserByUsername(username)
+        return username -> userRepository.findByUsernameAndEnabledTrue(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 

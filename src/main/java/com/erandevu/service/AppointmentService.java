@@ -48,14 +48,14 @@ public class AppointmentService {
         }
 
         // Get doctor and patient
-        User doctor = userRepository.findByIdAndEnabledTrue(request.getDoctorId())
+        User doctor = userRepository.findById(request.getDoctorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + request.getDoctorId()));
-        
-        User patient = userRepository.findByIdAndEnabledTrue(request.getPatientId())
+
+        User patient = userRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + request.getPatientId()));
 
         // Check for appointment conflicts
-        List<Appointment> conflictingAppointments = appointmentRepository.findConflictingAppointments(
+        List<Appointment> conflictingAppointments = appointmentRepository.findOverlappingAppointments(
                 request.getDoctorId(),
                 request.getAppointmentDateTime(),
                 request.getAppointmentDateTime().plusMinutes(30)
@@ -89,7 +89,7 @@ public class AppointmentService {
     @Cacheable(value = "appointments", key = "#doctorId")
     public List<AppointmentResponse> getAppointmentsByDoctor(Long doctorId) {
         // Verify doctor exists
-        userRepository.findByIdAndEnabledTrue(doctorId)
+        userRepository.findById(doctorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + doctorId));
 
         List<Appointment> appointments = appointmentRepository.findByDoctorIdAndStatusNotIn(
@@ -105,7 +105,7 @@ public class AppointmentService {
     @Cacheable(value = "appointments", key = "#doctorId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort")
     public PageResponse<AppointmentResponse> getAppointmentsByDoctorPaginated(Long doctorId, int page, int size, String sortBy, String sortDir) {
         // Verify doctor exists
-        userRepository.findByIdAndEnabledTrue(doctorId)
+        userRepository.findById(doctorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + doctorId));
 
         Pageable pageable = PageRequest.of(page, size);
@@ -121,7 +121,7 @@ public class AppointmentService {
     @Cacheable(value = "appointments", key = "#patientId")
     public List<AppointmentResponse> getAppointmentsByPatient(Long patientId) {
         // Verify patient exists
-        userRepository.findByIdAndEnabledTrue(patientId)
+        userRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + patientId));
 
         List<Appointment> appointments = appointmentRepository.findByPatientIdAndStatusNotIn(
@@ -137,7 +137,7 @@ public class AppointmentService {
     @Cacheable(value = "appointments", key = "#patientId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort")
     public PageResponse<AppointmentResponse> getAppointmentsByPatientPaginated(Long patientId, int page, int size, String sortBy, String sortDir) {
         // Verify patient exists
-        userRepository.findByIdAndEnabledTrue(patientId)
+        userRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + patientId));
 
         Pageable pageable = PageRequest.of(page, size);
