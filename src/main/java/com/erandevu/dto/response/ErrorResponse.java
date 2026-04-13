@@ -11,34 +11,40 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
- * Immutable error response for API errors.
- * All fields are private - use builder pattern for creation.
+ * Production-grade immutable error response for API errors.
+ * Includes traceId for distributed tracing and observability.
  */
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Schema(description = "Error response for API errors")
+@Schema(description = "Error response for API errors with trace support")
 public class ErrorResponse {
 
-    @Schema(description = "Timestamp of the error", example = "2024-01-01T10:00:00")
+    @Schema(description = "Timestamp of the error in ISO format", example = "2024-01-01T10:00:00")
     private LocalDateTime timestamp;
 
     @Schema(description = "HTTP status code", example = "404")
     private Integer status;
 
-    @Schema(description = "Error type", example = "RESOURCE_NOT_FOUND")
+    @Schema(description = "Machine-readable error code (e.g., E001, S001)", example = "E001")
+    private String errorCode;
+
+    @Schema(description = "Human-readable error type", example = "RESOURCE_NOT_FOUND")
     private String error;
 
     @Schema(description = "Error message", example = "User not found with id: 1")
     private String message;
 
-    @Schema(description = "Request path", example = "/api/users/1")
+    @Schema(description = "Request path that caused the error", example = "/api/users/1")
     private String path;
 
-    @Schema(description = "Validation errors for field-level validation")
+    @Schema(description = "Unique trace ID for request tracking across services", example = "550e8400-e29b-41d4-a716-446655440000")
+    private String traceId;
+
+    @Schema(description = "Field-level validation errors (key=field, value=message)")
     private Map<String, String> validationErrors;
 
-    @Schema(description = "Additional error details")
+    @Schema(description = "Additional structured error details")
     private Map<String, Object> details;
 }

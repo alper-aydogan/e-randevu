@@ -1,11 +1,17 @@
 package com.erandevu.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+/**
+ * Exception thrown when attempting to create a user that already exists.
+ * Extends BaseException for standardized error handling.
+ */
+public class UserAlreadyExistsException extends BaseException {
 
-@ResponseStatus(HttpStatus.CONFLICT)
-public class UserAlreadyExistsException extends RuntimeException {
     public UserAlreadyExistsException(String message) {
-        super(message);
+        super(ErrorCode.USER_ALREADY_EXISTS, message);
+    }
+
+    public UserAlreadyExistsException(String username) {
+        super(ErrorCode.USER_ALREADY_EXISTS,
+              String.format("User already exists with username: %s", username));
     }
 }

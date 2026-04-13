@@ -1,11 +1,17 @@
 package com.erandevu.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+/**
+ * Exception thrown when a requested resource is not found.
+ * Extends BaseException for standardized error handling.
+ */
+public class ResourceNotFoundException extends BaseException {
 
-@ResponseStatus(HttpStatus.NOT_FOUND)
-public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {
-        super(message);
+        super(ErrorCode.RESOURCE_NOT_FOUND, message);
+    }
+
+    public ResourceNotFoundException(String resourceName, Long id) {
+        super(ErrorCode.RESOURCE_NOT_FOUND,
+              String.format("%s not found with id: %d", resourceName, id));
     }
 }
