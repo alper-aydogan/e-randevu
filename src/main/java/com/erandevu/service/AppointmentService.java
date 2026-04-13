@@ -14,7 +14,8 @@ import com.erandevu.repository.UserRepository;
 import com.erandevu.service.validation.AppointmentValidator;
 import com.erandevu.util.PageResponseUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -37,9 +38,10 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 @Transactional
 public class AppointmentService {
+
+    private static final Logger log = LoggerFactory.getLogger(AppointmentService.class);
 
     private final AppointmentRepository appointmentRepository;
     private final UserRepository userRepository;

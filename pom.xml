@@ -181,10 +181,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
-                    <fork>true</fork>
-                    <executable>/Users/alper/Library/Java/JavaVirtualMachines/openjdk-21.0.2/Contents/Home/bin/javac</executable>
+                    <release>21</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
