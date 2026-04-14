@@ -174,6 +174,61 @@ public class Appointment extends BaseEntity {
                this.status == AppointmentStatus.COMPLETED;
     }
 
+    /**
+     * Checks if appointment can be cancelled (not already cancelled or completed).
+     *
+     * @return true if appointment can be cancelled
+     */
+    public boolean canBeCancelled() {
+        return this.status != AppointmentStatus.CANCELLED &&
+               this.status != AppointmentStatus.COMPLETED;
+    }
+
+    /**
+     * Checks if cancellation is within allowed time window.
+     *
+     * @return true if cancellation is allowed
+     */
+    public boolean isWithinCancellationWindow() {
+        return this.appointmentDateTime.isAfter(LocalDateTime.now().plusHours(2));
+    }
+
+    /**
+     * Returns a descriptive status message for this appointment.
+     *
+     * @return status message
+     */
+    public String getStatusDescription() {
+        return switch (this.status) {
+            case SCHEDULED -> "Scheduled for " + this.appointmentDateTime;
+            case CANCELLED -> "Cancelled: " + this.cancellationReason;
+            case COMPLETED -> "Completed";
+            case NO_SHOW -> "Patient did not attend";
+        };
+    }
+
+    /**
+     * Checks if the appointment is upcoming (scheduled and in future).
+     *
+     * @return true if appointment is upcoming
+     */
+    public boolean isUpcoming() {
+        return this.status == AppointmentStatus.SCHEDULED &&
+               this.appointmentDateTime.isAfter(LocalDateTime.now());
+    }
+
+    /**
+     * Gets the duration of this appointment in minutes.
+     *
+     * @return duration in minutes
+     */
+    public long getDurationMinutes() {
+        if (this.endDateTime == null || this.appointmentDateTime == null) {
+            return 30; // Default duration
+        }
+        return java.time.Duration.between(this.appointmentDateTime, this.endDateTime).toMinutes();
+    }
+
     // Manual getters for Lombok workaround
     public Long getId() {
         return super.getId();
@@ -201,5 +256,14 @@ public class Appointment extends BaseEntity {
 
     public String getCancellationReason() {
         return cancellationReason;
+    }
+
+    // Manual setters for Lombok workaround
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
     }
 }

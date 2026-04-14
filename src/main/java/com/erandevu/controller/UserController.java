@@ -30,7 +30,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID", description = "Returns user information by ID")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
+    @PreAuthorize("@authz.canAccessUserById(authentication, #id)")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         UserResponse response = userService.getUserById(id);
         return ResponseEntity.ok(response);
@@ -38,7 +38,7 @@ public class UserController {
 
     @GetMapping("/username/{username}")
     @Operation(summary = "Get user by username", description = "Returns user information by username")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
+    @PreAuthorize("@authz.canAccessUserByUsername(authentication, #username)")
     public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
         UserResponse response = userService.getUserByUsername(username);
         return ResponseEntity.ok(response);
@@ -62,7 +62,7 @@ public class UserController {
 
     @GetMapping("/doctors")
     @Operation(summary = "Get all doctors", description = "Returns all active doctors with pagination")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
+    @PreAuthorize("@authz.canListDoctors(authentication)")
     public ResponseEntity<PageResponse<UserResponse>> getAllDoctors(
             @Parameter(description = "Page number (0-based)", example = "0") 
             @RequestParam(defaultValue = "0") int page,
@@ -78,7 +78,7 @@ public class UserController {
 
     @GetMapping("/patients")
     @Operation(summary = "Get all patients", description = "Returns all active patients with pagination")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')")
+    @PreAuthorize("@authz.canListPatients(authentication)")
     public ResponseEntity<PageResponse<UserResponse>> getAllPatients(
             @Parameter(description = "Page number (0-based)", example = "0") 
             @RequestParam(defaultValue = "0") int page,

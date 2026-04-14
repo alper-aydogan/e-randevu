@@ -4,7 +4,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,20 @@ public class JwtService {
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
+
+    @PostConstruct
+    void validateConfiguration() {
+        if (jwtExpiration <= 0) {
+            throw new IllegalStateException("jwt.expiration must be greater than 0");
+        }
+
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+            Keys.hmacShaKeyFor(keyBytes);
+        } catch (DecodingException | IllegalArgumentException ex) {
+            throw new IllegalStateException("jwt.secret must be a valid Base64-encoded key for HMAC signing", ex);
+        }
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

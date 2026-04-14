@@ -120,6 +120,7 @@ class AppointmentServiceTest {
                     .patientName(appointment.getPatient().getFirstName() + " " + appointment.getPatient().getLastName())
                     .appointmentDateTime(appointment.getAppointmentDateTime())
                     .notes(appointment.getNotes())
+                    .cancellationReason(appointment.getCancellationReason())
                     .status(appointment.getStatus())
                     .build();
         }
@@ -219,10 +220,6 @@ class AppointmentServiceTest {
                     .cancellationReason("Patient requested")
                     .build();
             AppointmentResponse expectedResponse = testData.buildResponse(cancelled);
-            expectedResponse = expectedResponse.toBuilder()
-                    .status(AppointmentStatus.CANCELLED)
-                    .cancellationReason("Patient requested")
-                    .build();
 
             when(appointmentRepository.findByIdWithLock(appointment.getId())).thenReturn(Optional.of(appointment));
             when(appointmentRepository.save(any(Appointment.class))).thenReturn(cancelled);
